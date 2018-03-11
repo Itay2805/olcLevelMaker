@@ -17,6 +17,7 @@
 enum class Tool {
 	TILES,
 	META,
+	EXPORT_IMPORT,
 	LAST
 };
 
@@ -37,7 +38,9 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	int worldOffsetX = 0, worldOffsetY = 0;
 	bool grid = false;
 	bool floodMode = false;
-	
+
+	wstring file = L"";
+
 	void DrawStringFont(int x, int y, wstring characters) {
 		for (wchar_t c : characters) {
 			int index = this->characters.find(c);
@@ -110,6 +113,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 		if (tool == Tool::TILES) tilesTool(tileX, tileY);
 		if (tool == Tool::META) metaTool(tileX, tileY);
+		if (tool == Tool::EXPORT_IMPORT) exportAndImportTool();
 
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && m_mousePosX <= 300) {
 			// draw coords
@@ -153,10 +157,15 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			moved = true;
 			worldOffsetX += 16;
 		} else if (m_keys[VK_CONTROL].bHeld + m_keys[L'S'].bPressed) {
-			level.Save(LEVEL_FILE_NAME);
+			if (file.length() == 0) {
+				SaveLevel();
+			}
+			else {
+				level.Save(file);
+			}
 		}
 		else if (m_keys[VK_CONTROL].bHeld + m_keys[L'L'].bPressed) {
-			level.Load(LEVEL_FILE_NAME);
+			LoadLevel();
 		}
 		else if (m_keys[L'T'].bPressed) {
 			tool = (Tool)((int)tool + 1);
@@ -205,6 +214,86 @@ class olcLevelMaker : public olcConsoleGameEngine {
 					level[tileX + tileY * level.GetWidth()].SetSolid(!level[tileX + tileY * level.GetWidth()].IsSolid());
 				}
 			}
+		}
+	}
+
+	void exportAndImportTool() {
+		DrawStringFont(uiBase + 1, 15, L"IMPORT:");
+		DrawStringFont(uiBase + 6, 25, L"LEVEL");
+		DrawStringFont(uiBase + 6, 35, L"SPRITESHEET");
+		DrawStringFont(uiBase + 1, 65, L"EXPORT:");
+		DrawStringFont(uiBase + 6, 75, L"LEVEL");
+		DrawStringFont(uiBase + 6, 85, L"SPRITE");
+		if (m_mouse[0].bPressed) {
+			
+			// import level
+			if (m_mousePosX > uiBase + 6 && m_mousePosX < 400 && m_mousePosY > 25 && m_mousePosY < 25 + 8) {
+				LoadLevel();
+			}
+			// import spritesheet
+			if (m_mousePosX > uiBase + 6 && m_mousePosX < 400 && m_mousePosY > 35 && m_mousePosY < 35 + 8) {
+				ImportSpriteSheet();
+			}
+			// export level
+			if (m_mousePosX > uiBase + 6 && m_mousePosX < 400 && m_mousePosY > 75 && m_mousePosY < 75 + 8) {
+				SaveLevel();
+			}
+			// export level as sprite
+			if (m_mousePosX > uiBase + 6 && m_mousePosX < 400 && m_mousePosY > 85 && m_mousePosY < 85 + 8) {
+				// TODO:
+			}
+		}
+	}
+
+	void ImportSpriteSheet() {
+		wchar_t filename[MAX_PATH];
+		OPENFILENAME ofn;
+		ZeroMemory(&filename, sizeof(filename));
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = NULL;
+		ofn.lpstrFile = filename;
+		ofn.nMaxFile = MAX_PATH;
+		ofn.Flags = OFN_FILEMUSTEXIST;
+		ofn.lpstrFilter = L"olcSprite\0*.spr\0Any File\0*.*\0";
+		ofn.lpstrTitle = L"Import Sprite Sheet";
+		if (GetOpenFileName(&ofn)) {
+			level.LoadSpriteSheet(filename, 16);
+		}
+	}
+
+	void LoadLevel() {
+		wchar_t filename[MAX_PATH];
+		OPENFILENAME ofn;
+		ZeroMemory(&filename, sizeof(filename));
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = NULL;
+		ofn.lpstrFile = filename;
+		ofn.nMaxFile = MAX_PATH;
+		ofn.Flags = OFN_FILEMUSTEXIST;
+		ofn.lpstrFilter = L"Level File\0*.lvl\0Any File\0*.*\0";
+		ofn.lpstrTitle = L"Export Level";
+		if (GetOpenFileName(&ofn)) {
+			level.Save(filename);
+		}
+	}
+
+	void SaveLevel() {
+		wchar_t filename[MAX_PATH];
+		OPENFILENAME ofn;
+		ZeroMemory(&filename, sizeof(filename));
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = NULL;
+		ofn.lpstrFile = filename;
+		ofn.nMaxFile = MAX_PATH;
+		ofn.Flags = OFN_FILEMUSTEXIST;
+		ofn.lpstrFilter = L"Level File\0*.lvl\0Any File\0*.*\0";
+		ofn.lpstrTitle = L"Import Level";
+		if (GetOpenFileName(&ofn)) {
+			level.Load(filename);
+			file = filename;
 		}
 	}
 
