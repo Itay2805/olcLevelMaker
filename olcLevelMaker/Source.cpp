@@ -1,6 +1,7 @@
 #include "olcConsoleGameEngine.h"
 
 #include <string>
+#include <queue>
 
 #include "SpriteSheet.h"
 #include "Level.h"
@@ -11,6 +12,7 @@
 #define MAP_WIDTH 10
 #define MAP_HEIGHT 10
 #define LEVEL_FILE_NAME L"level.lvl"
+#define DEFAULT_TILE 14
 
 enum class Tool {
 	TILES,
@@ -24,6 +26,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	SpriteSheet font;
 	SpriteSheet tiles;
 	wstring characters = L" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefgijklmnopqrstuvwxyz{|}~";
+	olcSprite fillIcon;
 
 	Tool tool = Tool::TILES;
 	Level level;
@@ -33,6 +36,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	int uiBase = 300, tilesPerRow, tilesPerColumn, tilesPerPage, uiWidth;
 	int worldOffsetX = 0, worldOffsetY = 0;
 	bool grid = false;
+	bool floodMode = false;
 	
 	void DrawStringFont(int x, int y, wstring characters) {
 		for (wchar_t c : characters) {
@@ -45,10 +49,11 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	virtual bool OnUserCreate() {
 		font.Load(FONT_SPRITESHEET, 8, 8);
 		tiles.Load(TILE_SPRITESHEET, 16, 16);
+		fillIcon.Load(L"fill.spr");
 
 		level.Create(MAP_WIDTH, MAP_HEIGHT);
 		for (int i = 0; i < level.GetWidth() * level.GetHeight(); i++) {
-			level[i].SetSpriteId(14);
+			level[i].SetSpriteId(DEFAULT_TILE);
 		}
 
 		uiWidth = 400 - uiBase;
@@ -69,35 +74,12 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		tileX -= worldOffsetX / 16;
 		tileY -= worldOffsetY / 16;
 
-		Fill(0, 0, 400, 200, ' ', BG_WHITE | FG_WHITE);
+		Fill(0, 0, 300, 200, ' ', BG_BLACK | FG_BLACK);
 
 		int topTileX = -(worldOffsetX / 16);
 		int topTileY = -(worldOffsetY / 16);
 
 		// draw map
-//		for (int y = 0; y < 200 / TILE_WIDTH; y++) {
-//			for (int x = 0; x < 300 / TILE_WIDTH; x++) {
-//				int i = (topTileX + x) + (topTileY + y) * level.GetWidth();
-//				if (i >= level.GetHeight() * level.GetWidth() || i < 0) {
-//					continue;
-//				}
-//				DrawSprite(x * TILE_WIDTH + worldOffsetX, y * TILE_WIDTH + worldOffsetY, level[i].GetSprite(tiles));
-//				/*if (grid) {
-//					DrawLine(x * 16 + worldOffsetX, y * 16 + worldOffsetY, x * 16 + 16 + worldOffsetX, y * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-//					DrawLine(x * 16 + worldOffsetX, y * 16 + worldOffsetY, x * 16 + worldOffsetX, y * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-//					DrawLine(x * 16 + 16 + worldOffsetX, y * 16 + worldOffsetY, x * 16 + 16 + worldOffsetX, y * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-//					DrawLine(x * 16 + worldOffsetX, y * 16 + 16 + worldOffsetY, x * 16 + 16 + worldOffsetX, y * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-//				}
-//				if (tool == Tool::META) {
-//					int offset = 0;
-//					if (level[i].IsSolid()) {
-//						Fill(x * TILE_WIDTH + worldOffsetX + offset, y * TILE_WIDTH + worldOffsetY + offset, x * TILE_WIDTH + worldOffsetX + 2 + offset, y * TILE_WIDTH + worldOffsetY + 2 + offset, '#', BG_BLACK | FG_DARK_RED);
-//						offset += 2;
-//					}
-//				}*/
-//			}
-//		}
-		
 		for (int y = topTileY; y < topTileY + ceil(200.0 / TILE_WIDTH); y++) {
 			for (int x = topTileX; x < topTileX + ceil(300.0 / TILE_WIDTH); x++) {
 				if (x < 0 || x >= level.GetWidth() || y < 0 || y >= level.GetHeight()) continue;
@@ -128,8 +110,8 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 		if (tool == Tool::TILES) tilesTool(tileX, tileY);
 		if (tool == Tool::META) metaTool(tileX, tileY);
-		
-		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() &&  m_mousePosX <= 300) {
+
+		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && m_mousePosX <= 300) {
 			// draw coords
 			wstring str(L"<");
 			str.append(std::to_wstring(tileX));
@@ -146,6 +128,12 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
 			DrawLine(tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
 			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+		}
+
+		int iconOffset = 0;
+		if (floodMode) {
+			DrawSprite(2, 190, &fillIcon);
+			iconOffset += 10;
 		}
 
 		// world movement
@@ -179,6 +167,9 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		else if (m_keys[L'G'].bPressed) {
 			grid = !grid;
 		}
+		else if (m_keys[L'F'].bPressed) {
+			floodMode = !floodMode;
+		}
 
 		return true;
 	}
@@ -207,7 +198,12 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
 			// change the tile
 			if (m_mouse[0].bPressed) {
-				level[tileX + tileY * level.GetWidth()].SetSolid(!level[tileX + tileY * level.GetWidth()].IsSolid());
+				if (floodMode) {
+					FloorFillSolid(tileX, tileY);
+				}
+				else {
+					level[tileX + tileY * level.GetWidth()].SetSolid(!level[tileX + tileY * level.GetWidth()].IsSolid());
+				}
 			}
 		}
 	}
@@ -278,10 +274,58 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
 			// change the tile
 			if (m_mouse[0].bHeld) {
-				level[tileX + tileY * level.GetWidth()].SetSpriteId(selectedSprite);
+				if (floodMode) {
+					FloodFillTile(tileX, tileY);
+				}
+				else {
+					level[tileX + tileY * level.GetWidth()].SetSpriteId(selectedSprite);
+				}
 			}
 		}
 
+	}
+
+	int fillTileOfType = DEFAULT_TILE;
+	bool solidStart = false;
+
+	void FloorFillSolid(int x, int y) {
+		fillTileOfType = level[x + y * level.GetWidth()].GetSpriteId();
+		solidStart = !level[x + y * level.GetWidth()].IsSolid();
+		queue<pair<int, int>> q;
+		q.push(pair<int, int>(x, y));
+		while (q.size() != 0) {
+			pair<int, int> xy = q.front();
+			q.pop();
+			level[xy.first + xy.second * level.GetWidth()].SetSolid(solidStart);
+			if (ShouldFillSolid(xy.first + 1, xy.second)) q.push(pair<int, int>(xy.first + 1, xy.second));
+			if (ShouldFillSolid(xy.first - 1, xy.second)) q.push(pair<int, int>(xy.first - 1, xy.second));
+			if (ShouldFillSolid(xy.first, xy.second + 1)) q.push(pair<int, int>(xy.first, xy.second + 1));
+			if (ShouldFillSolid(xy.first, xy.second - 1)) q.push(pair<int, int>(xy.first, xy.second - 1));
+		}
+	}
+
+	bool ShouldFillSolid(int x, int y) {
+		return level[x + y * level.GetWidth()].GetSpriteId() == fillTileOfType && level[x + y * level.GetWidth()].IsSolid() != solidStart;
+	}
+
+	void FloodFillTile(int x, int y) {
+		fillTileOfType = level[x + y * level.GetWidth()].GetSpriteId();
+		if (fillTileOfType == selectedSprite) return;
+		queue<pair<int, int>> q;
+		q.push(pair<int, int>(x, y));
+		while (q.size() != 0) {
+			pair<int, int> xy = q.front();
+			q.pop();
+			level[xy.first + xy.second * level.GetWidth()].SetSpriteId(selectedSprite);
+			if (ShouldFillTile(xy.first + 1, xy.second)) q.push(pair<int, int>(xy.first + 1, xy.second));
+			if (ShouldFillTile(xy.first - 1, xy.second)) q.push(pair<int, int>(xy.first - 1, xy.second));
+			if (ShouldFillTile(xy.first, xy.second + 1)) q.push(pair<int, int>(xy.first, xy.second + 1));
+			if (ShouldFillTile(xy.first, xy.second - 1)) q.push(pair<int, int>(xy.first, xy.second - 1));
+		}
+	}
+
+	bool ShouldFillTile(int x,int y) {
+		return level[x + y * level.GetWidth()].GetSpriteId() == fillTileOfType;
 	}
 
 };
