@@ -305,6 +305,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	}
 
 	bool ShouldFillSolid(int x, int y) {
+		if (x < 0 || y < 0 || x >= level.GetWidth() || y >= level.GetHeight()) return false;
 		return level[x + y * level.GetWidth()].GetSpriteId() == fillTileOfType && level[x + y * level.GetWidth()].IsSolid() != solidStart;
 	}
 
@@ -325,6 +326,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	}
 
 	bool ShouldFillTile(int x,int y) {
+		if (x < 0 || y < 0 || x >= level.GetWidth() || y >= level.GetHeight()) return false;
 		return level[x + y * level.GetWidth()].GetSpriteId() == fillTileOfType;
 	}
 
