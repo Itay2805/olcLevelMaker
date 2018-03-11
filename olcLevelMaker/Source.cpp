@@ -14,7 +14,7 @@
 
 enum class Tool {
 	TILES,
-	SOLID,
+	META,
 	LAST
 };
 
@@ -32,6 +32,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	int pageCount = 1;
 	int uiBase = 300, tilesPerRow, tilesPerColumn, tilesPerPage, uiWidth;
 	int worldOffsetX = 0, worldOffsetY = 0;
+	bool grid = false;
 	
 	void DrawStringFont(int x, int y, wstring characters) {
 		for (wchar_t c : characters) {
@@ -59,6 +60,8 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		return true;
 	}
 
+	bool moved = false;
+
 	virtual bool OnUserUpdate(float fElapsedTime) {
 		int tileX = m_mousePosX / 16;
 		int tileY = m_mousePosY / 16;
@@ -68,18 +71,54 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 		Fill(0, 0, 400, 200, ' ', BG_WHITE | FG_WHITE);
 
+		int topTileX = -(worldOffsetX / 16);
+		int topTileY = -(worldOffsetY / 16);
+
 		// draw map
-		for (int i = 0; i < level.GetWidth() * level.GetHeight(); i++) {
-			int x = i % level.GetWidth();
-			int y = (i - x) / level.GetWidth();
-			if (x < 0 || y < 0) {
-				continue;
-			}
-			DrawSprite(x * TILE_WIDTH + worldOffsetX, y * TILE_WIDTH + worldOffsetY, level[i].GetSprite(tiles));
-			if (tool == Tool::SOLID) {
-				if (level[i].IsSolid()) {
-					DrawLine(x * TILE_WIDTH + worldOffsetX, y * TILE_WIDTH + worldOffsetY, x * TILE_WIDTH + worldOffsetX + TILE_WIDTH, y * TILE_WIDTH + worldOffsetY + TILE_WIDTH, PIXEL_SOLID, BG_BLACK | FG_RED);
-					DrawLine(x * TILE_WIDTH + worldOffsetX + TILE_WIDTH, y * TILE_WIDTH + worldOffsetY, x * TILE_WIDTH + worldOffsetX, y * TILE_WIDTH + worldOffsetY + TILE_WIDTH, PIXEL_SOLID, BG_BLACK | FG_RED);
+//		for (int y = 0; y < 200 / TILE_WIDTH; y++) {
+//			for (int x = 0; x < 300 / TILE_WIDTH; x++) {
+//				int i = (topTileX + x) + (topTileY + y) * level.GetWidth();
+//				if (i >= level.GetHeight() * level.GetWidth() || i < 0) {
+//					continue;
+//				}
+//				DrawSprite(x * TILE_WIDTH + worldOffsetX, y * TILE_WIDTH + worldOffsetY, level[i].GetSprite(tiles));
+//				/*if (grid) {
+//					DrawLine(x * 16 + worldOffsetX, y * 16 + worldOffsetY, x * 16 + 16 + worldOffsetX, y * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
+//					DrawLine(x * 16 + worldOffsetX, y * 16 + worldOffsetY, x * 16 + worldOffsetX, y * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
+//					DrawLine(x * 16 + 16 + worldOffsetX, y * 16 + worldOffsetY, x * 16 + 16 + worldOffsetX, y * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
+//					DrawLine(x * 16 + worldOffsetX, y * 16 + 16 + worldOffsetY, x * 16 + 16 + worldOffsetX, y * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
+//				}
+//				if (tool == Tool::META) {
+//					int offset = 0;
+//					if (level[i].IsSolid()) {
+//						Fill(x * TILE_WIDTH + worldOffsetX + offset, y * TILE_WIDTH + worldOffsetY + offset, x * TILE_WIDTH + worldOffsetX + 2 + offset, y * TILE_WIDTH + worldOffsetY + 2 + offset, '#', BG_BLACK | FG_DARK_RED);
+//						offset += 2;
+//					}
+//				}*/
+//			}
+//		}
+		
+		for (int y = topTileY; y < topTileY + ceil(200.0 / TILE_WIDTH); y++) {
+			for (int x = topTileX; x < topTileX + ceil(300.0 / TILE_WIDTH); x++) {
+				if (x < 0 || x >= level.GetWidth() || y < 0 || y >= level.GetHeight()) continue;
+				int i = x + y * level.GetWidth();
+				if (i < 0 || i >= level.GetWidth() * level.GetHeight()) continue;
+				int screenX = x * TILE_WIDTH + worldOffsetX;
+				int screenY = y * TILE_WIDTH + worldOffsetY;
+				if (screenX < 0 || screenX >= 300 || screenY < 0 || screenY >= 200) continue;
+				DrawSprite(screenX, screenY, level[i].GetSprite(tiles));
+				if (grid) {
+					DrawLine(screenX, screenY, screenX + TILE_WIDTH, screenY, PIXEL_SOLID, BG_BLACK | FG_BLACK);
+					DrawLine(screenX, screenY, screenX, screenY + TILE_WIDTH, PIXEL_SOLID, BG_BLACK | FG_BLACK);
+					DrawLine(screenX + TILE_WIDTH, screenY, screenX + TILE_WIDTH, screenY + TILE_WIDTH, PIXEL_SOLID, BG_BLACK | FG_BLACK);
+					DrawLine(screenX, screenY + TILE_WIDTH, screenX + TILE_WIDTH, screenY + TILE_WIDTH, PIXEL_SOLID, BG_BLACK | FG_BLACK);
+				}
+				if (tool == Tool::META) {
+					int offset = 0;
+					if (level[i].IsSolid()) {
+						Fill(screenX + offset, screenY + offset, screenX + 3 + offset, screenY + 3 + offset, PIXEL_SOLID, BG_BLACK | FG_RED);
+						offset += 3;
+					}
 				}
 			}
 		}
@@ -88,9 +127,9 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		Fill(uiBase, 0, 400, 200, ' ', BG_GREY | FG_BLACK);
 
 		if (tool == Tool::TILES) tilesTool(tileX, tileY);
-		if (tool == Tool::SOLID) solidTool(tileX, tileY);
+		if (tool == Tool::META) metaTool(tileX, tileY);
 		
-		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
+		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() &&  m_mousePosX <= 300) {
 			// draw coords
 			wstring str(L"<");
 			str.append(std::to_wstring(tileX));
@@ -103,23 +142,27 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			int xoff = worldOffsetX;
 
 			// draw hovered tile rect
-			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-			DrawLine(tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
+			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+			DrawLine(tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
 		}
 
 		// world movement
 		if (m_keys[VK_UP].bPressed) {
+			moved = true;
 			worldOffsetY -= 16;
 		}
 		else if (m_keys[VK_DOWN].bPressed) {
+			moved = true;
 			worldOffsetY += 16;
 		}
 		else if (m_keys[VK_LEFT].bPressed) {
+			moved = true;
 			worldOffsetX -= 16;
 		}
 		else if (m_keys[VK_RIGHT].bPressed) {
+			moved = true;
 			worldOffsetX += 16;
 		} else if (m_keys[L'S'].bPressed) {
 			level.Save(LEVEL_FILE_NAME);
@@ -133,13 +176,32 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				tool = Tool::TILES;
 			}
 		}
+		else if (m_keys[L'G'].bPressed) {
+			grid = !grid;
+		}
 
 		return true;
 	}
 
-	void solidTool(int tileX, int tileY) {
-		wstring pageText(L"SOLID BRUSH");
-		DrawStringFont(uiBase + 5, 5, pageText);
+	enum class MetaTools {
+		SOLID_BRUSH
+	};
+
+	MetaTools selectedMetaTool;
+
+
+	void metaTool(int tileX, int tileY) {
+		wstring title(L"TILE META");
+		DrawStringFont(uiBase + 5, 5, title);
+		
+		wstring solidBrushText(L"");
+		if (selectedMetaTool == MetaTools::SOLID_BRUSH) {
+			solidBrushText.append(L" * ");
+		}
+		solidBrushText.append(L"SOLID");
+		DrawStringFont(uiBase + 10, 18, solidBrushText);
+		Fill(uiBase + 7, 19, uiBase + 7 + 5, 19 + 5, PIXEL_SOLID, BG_BLACK | FG_RED);
+
 
 		// are we in the world editor
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
