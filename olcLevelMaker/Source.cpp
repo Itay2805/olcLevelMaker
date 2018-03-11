@@ -12,6 +12,12 @@
 #define MAP_HEIGHT 10
 #define LEVEL_FILE_NAME L"level.lvl"
 
+enum class Tool {
+	TILES,
+	SOLID,
+	LAST
+};
+
 class olcLevelMaker : public olcConsoleGameEngine {
 
 	float mapMoveX, mapMoveY;
@@ -19,6 +25,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	SpriteSheet tiles;
 	wstring characters = L" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefgijklmnopqrstuvwxyz{|}~";
 
+	Tool tool = Tool::TILES;
 	Level level;
 	int page = 0;
 	int selectedSprite = 0;
@@ -61,8 +68,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 		Fill(0, 0, 400, 200, ' ', BG_WHITE | FG_WHITE);
 
-		// DrawSprite(0, 0, font[16]);
-
+		// draw map
 		for (int i = 0; i < level.GetWidth() * level.GetHeight(); i++) {
 			int x = i % level.GetWidth();
 			int y = (i - x) / level.GetWidth();
@@ -70,15 +76,94 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				continue;
 			}
 			DrawSprite(x * TILE_WIDTH + worldOffsetX, y * TILE_WIDTH + worldOffsetY, level[i].GetSprite(tiles));
+			if (tool == Tool::SOLID) {
+				if (level[i].IsSolid()) {
+					DrawLine(x * TILE_WIDTH + worldOffsetX, y * TILE_WIDTH + worldOffsetY, x * TILE_WIDTH + worldOffsetX + TILE_WIDTH, y * TILE_WIDTH + worldOffsetY + TILE_WIDTH, PIXEL_SOLID, BG_BLACK | FG_RED);
+					DrawLine(x * TILE_WIDTH + worldOffsetX + TILE_WIDTH, y * TILE_WIDTH + worldOffsetY, x * TILE_WIDTH + worldOffsetX, y * TILE_WIDTH + worldOffsetY + TILE_WIDTH, PIXEL_SOLID, BG_BLACK | FG_RED);
+				}
+			}
 		}
 
+		// fill the menu
 		Fill(uiBase, 0, 400, 200, ' ', BG_GREY | FG_BLACK);
+
+		if (tool == Tool::TILES) tilesTool(tileX, tileY);
+		if (tool == Tool::SOLID) solidTool(tileX, tileY);
 		
+		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
+			// draw coords
+			wstring str(L"<");
+			str.append(std::to_wstring(tileX));
+			str.append(L", ");
+			str.append(std::to_wstring(tileY));
+			str.append(L">");
+			DrawStringFont(0, 0, str);
+
+			int yoff = worldOffsetY;
+			int xoff = worldOffsetX;
+
+			// draw hovered tile rect
+			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
+			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
+			DrawLine(tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
+			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
+		}
+
+		// world movement
+		if (m_keys[VK_UP].bPressed) {
+			worldOffsetY -= 16;
+		}
+		else if (m_keys[VK_DOWN].bPressed) {
+			worldOffsetY += 16;
+		}
+		else if (m_keys[VK_LEFT].bPressed) {
+			worldOffsetX -= 16;
+		}
+		else if (m_keys[VK_RIGHT].bPressed) {
+			worldOffsetX += 16;
+		} else if (m_keys[L'S'].bPressed) {
+			level.Save(LEVEL_FILE_NAME);
+		}
+		else if (m_keys[L'L'].bPressed) {
+			level.Load(LEVEL_FILE_NAME);
+		}
+		else if (m_keys[L'T'].bPressed) {
+			tool = (Tool)((int)tool + 1);
+			if (tool == Tool::LAST) {
+				tool = Tool::TILES;
+			}
+		}
+
+		return true;
+	}
+
+	void solidTool(int tileX, int tileY) {
+		wstring pageText(L"SOLID BRUSH");
+		DrawStringFont(uiBase + 5, 5, pageText);
+
+		// are we in the world editor
+		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
+			// change the tile
+			if (m_mouse[0].bPressed) {
+				level[tileX + tileY * level.GetWidth()].SetSolid(!level[tileX + tileY * level.GetWidth()].IsSolid());
+			}
+		}
+	}
+
+	void tilesTool(int tileX, int tileY) {
+
 		// draw page
-		wstring pageText(L"PAGE: ");
-		pageText.append(std::to_wstring(page));
-		pageText.append(L"/");
-		pageText.append(std::to_wstring(pageCount));
+		wstring pageText(L"TILES:");
+		if (pageCount == 0) {
+			pageText.append(std::to_wstring(tiles.GetTileCount()));
+		}
+		else {
+			pageText.append(std::to_wstring(page));
+			pageText.append(L"/");
+			pageText.append(std::to_wstring(pageCount));
+			pageText.append(L"/");
+			pageText.append(std::to_wstring(tiles.GetTileCount()));
+		}
 		DrawStringFont(uiBase + 5, 5, pageText);
 
 		// draw sprites in menu
@@ -94,16 +179,16 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				drawn++;
 			}
 		}
-		
+
+		// draw selected sprite thing
 		if (selectedSprite >= tilesPerPage * page && selectedSprite < tilesPerPage * page + tilesPerPage) {
-			// draw selected sprite thing
 			int col = selectedSprite % tilesPerRow;
 			int row = (selectedSprite - col) / tilesPerRow;
 			int y = 23 + row * tiles.GetTileHeight();
 			int x = uiBase + col * tiles.GetTileWidth();
 			DrawLine(x, y, x + 16, y, PIXEL_SOLID, BG_RED | FG_RED);
 			DrawLine(x, y, x, y + 16, PIXEL_SOLID, BG_RED | FG_RED);
-			DrawLine(x + 16,y, x + 16, y + 16, PIXEL_SOLID, BG_RED | FG_RED);
+			DrawLine(x + 16, y, x + 16, y + 16, PIXEL_SOLID, BG_RED | FG_RED);
 			DrawLine(x, y + 16, x + 16, y + 16, PIXEL_SOLID, BG_RED | FG_RED);
 		}
 
@@ -126,53 +211,15 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				selectedSprite = index;
 			}
 		}
-		
+
 		// are we in the world editor
-		// will need to change to if to work for moving world
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
-			// draw coords
-			wstring str(L"<");
-			str.append(std::to_wstring(tileX));
-			str.append(L", ");
-			str.append(std::to_wstring(tileY));
-			str.append(L">");
-			DrawStringFont(0, 0, str);
-
-			int yoff = worldOffsetY;
-			int xoff = worldOffsetX;
-
-			// draw hovered tile rect
-			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-			DrawLine(tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_WHITE);
-			
 			// change the tile
 			if (m_mouse[0].bHeld) {
 				level[tileX + tileY * level.GetWidth()].SetSpriteId(selectedSprite);
 			}
 		}
 
-		// world movement
-		if (m_keys[VK_UP].bPressed) {
-			worldOffsetY -= 16;
-		}
-		else if (m_keys[VK_DOWN].bPressed) {
-			worldOffsetY += 16;
-		}
-		else if (m_keys[VK_LEFT].bPressed) {
-			worldOffsetX -= 16;
-		}
-		else if (m_keys[VK_RIGHT].bPressed) {
-			worldOffsetX += 16;
-		} else if (m_keys[L'S'].bPressed) {
-			level.Save(LEVEL_FILE_NAME);
-		}
-		else if (m_keys[L'L'].bPressed) {
-			level.Load(LEVEL_FILE_NAME);
-		}
-
-		return true;
 	}
 
 };

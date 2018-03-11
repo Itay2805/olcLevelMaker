@@ -12,6 +12,7 @@
 class Tile {
 private:
 	int spriteId;
+	bool solid = false;
 
 public:
 	Tile() {
@@ -26,15 +27,17 @@ public:
 
 	inline void SetSpriteId(int spriteId) { this->spriteId = spriteId; }
 	inline int GetSpriteId() const { return spriteId; }
+	inline void SetSolid(bool solid) { this->solid = solid; }
+	inline bool IsSolid() const { return solid; }
 	inline olcSprite* GetSprite(const SpriteSheet& spritesheet) { return spritesheet[spriteId]; }
 
 	friend istream& operator>>(istream& input, Tile& tile) {
-		input >> tile.spriteId;
+		input >> tile.spriteId >> tile.solid;
 		return input;
 	}
 
 	friend ostream& operator<<(ostream& output, const Tile& tile) {
-		output << tile.spriteId << " ";
+		output << tile.spriteId << " " << tile.solid << " ";
 		return output;
 	}
 
