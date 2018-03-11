@@ -131,7 +131,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 
 		int iconOffset = 0;
-		if (floodMode) {
+		if (floodMode || m_keys[VK_CONTROL].bHeld) {
 			DrawSprite(2, 190, &fillIcon);
 			iconOffset += 10;
 		}
@@ -152,10 +152,10 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		else if (m_keys[VK_RIGHT].bPressed) {
 			moved = true;
 			worldOffsetX += 16;
-		} else if (m_keys[L'S'].bPressed) {
+		} else if (m_keys[VK_CONTROL].bHeld + m_keys[L'S'].bPressed) {
 			level.Save(LEVEL_FILE_NAME);
 		}
-		else if (m_keys[L'L'].bPressed) {
+		else if (m_keys[VK_CONTROL].bHeld + m_keys[L'L'].bPressed) {
 			level.Load(LEVEL_FILE_NAME);
 		}
 		else if (m_keys[L'T'].bPressed) {
@@ -198,7 +198,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
 			// change the tile
 			if (m_mouse[0].bPressed) {
-				if (floodMode) {
+				if (floodMode || m_keys[VK_CONTROL].bHeld) {
 					FloorFillSolid(tileX, tileY);
 				}
 				else {
@@ -274,7 +274,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
 			// change the tile
 			if (m_mouse[0].bHeld) {
-				if (floodMode) {
+				if (floodMode || m_keys[VK_CONTROL].bHeld) {
 					FloodFillTile(tileX, tileY);
 				}
 				else {
