@@ -156,7 +156,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		else if (m_keys[VK_RIGHT].bPressed) {
 			moved = true;
 			worldOffsetX += 16;
-		} else if (m_keys[VK_CONTROL].bHeld + m_keys[L'S'].bPressed) {
+		} else if (m_keys[VK_CONTROL].bHeld && m_keys[L'S'].bPressed) {
 			if (file.length() == 0) {
 				SaveLevel();
 			}
@@ -164,7 +164,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				level.Save(file);
 			}
 		}
-		else if (m_keys[VK_CONTROL].bHeld + m_keys[L'L'].bPressed) {
+		else if (m_keys[VK_CONTROL].bHeld && m_keys[L'L'].bPressed) {
 			LoadLevel();
 		}
 		else if (m_keys[L'T'].bPressed) {
@@ -240,7 +240,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			}
 			// export level as sprite
 			if (m_mousePosX > uiBase + 6 && m_mousePosX < 400 && m_mousePosY > 85 && m_mousePosY < 85 + 8) {
-				// TODO:
+				ExportAsSprite();
 			}
 		}
 	}
@@ -255,7 +255,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		ofn.lpstrFile = filename;
 		ofn.nMaxFile = MAX_PATH;
 		ofn.Flags = OFN_FILEMUSTEXIST;
-		ofn.lpstrFilter = L"olcSprite\0*.spr\0Any File\0*.*\0";
+		ofn.lpstrFilter = L"olcSprite (*.spr)\0*.spr\0Any File\0*.*\0";
 		ofn.lpstrTitle = L"Import Sprite Sheet";
 		if (GetOpenFileName(&ofn)) {
 			level.LoadSpriteSheet(filename, 16);
@@ -272,10 +272,10 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		ofn.lpstrFile = filename;
 		ofn.nMaxFile = MAX_PATH;
 		ofn.Flags = OFN_FILEMUSTEXIST;
-		ofn.lpstrFilter = L"Level File\0*.lvl\0Any File\0*.*\0";
-		ofn.lpstrTitle = L"Export Level";
+		ofn.lpstrFilter = L"Level File (*.lvl)\0*.lvl\0Any File\0*.*\0";
+		ofn.lpstrTitle = L"Load Level";
 		if (GetOpenFileName(&ofn)) {
-			level.Save(filename);
+			level.Load(filename);
 		}
 	}
 
@@ -288,12 +288,48 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		ofn.hwndOwner = NULL;
 		ofn.lpstrFile = filename;
 		ofn.nMaxFile = MAX_PATH;
-		ofn.Flags = OFN_FILEMUSTEXIST;
-		ofn.lpstrFilter = L"Level File\0*.lvl\0Any File\0*.*\0";
-		ofn.lpstrTitle = L"Import Level";
-		if (GetOpenFileName(&ofn)) {
-			level.Load(filename);
-			file = filename;
+		ofn.lpstrFilter = L"Level File (*.lvl)\0*.lvl\0Any File\0*.*\0";
+		ofn.lpstrTitle = L"Save Level";
+		if (GetSaveFileName(&ofn)) {
+			wstring f = filename;
+			if (!ends_with(filename, L".lvl")) {
+				f.append(L".lvl");
+			}
+			level.Save(f);
+			file = f;
+		}
+	}
+
+	void ExportAsSprite() {
+		wchar_t filename[MAX_PATH];
+		OPENFILENAME ofn;
+		ZeroMemory(&filename, sizeof(filename));
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = NULL;
+		ofn.lpstrFile = filename;
+		ofn.nMaxFile = MAX_PATH;
+		ofn.lpstrFilter = L"olcSprite (*.spr)\0*.spr\0Any File\0*.*\0";
+		ofn.lpstrTitle = L"Export Level As Sprite";
+		ofn.lpstrDefExt = L"spr";
+		if (GetSaveFileName(&ofn)) {
+			wstring f = filename;
+			if (!ends_with(filename, L".spr")) {
+				f.append(L".spr");
+			}
+			olcSprite exportedSprite(level.GetWidth() * TILE_WIDTH, level.GetHeight() * TILE_WIDTH);
+			for (int y = 0; y < level.GetHeight(); y++) {
+				for (int x = 0; x < level.GetWidth(); x++) {
+					olcSprite* sprite = level[x + y * level.GetWidth()].GetSprite(tiles);
+					for (int sy = 0; sy < sprite->nHeight; sy++) {
+						for (int sx = 0; sx < sprite->nWidth; sx++) {
+							exportedSprite.SetColour(x * TILE_WIDTH + sx, y * TILE_WIDTH + sy, sprite->GetColour(sx, sy));
+							exportedSprite.SetGlyph(x * TILE_WIDTH + sx, y * TILE_WIDTH + sy, sprite->GetGlyph(sx, sy));
+						}
+					}
+				}
+			}
+			exportedSprite.Save(f);
 		}
 	}
 
@@ -372,6 +408,12 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			}
 		}
 
+	}
+
+	inline bool ends_with(std::wstring const & value, std::wstring const & ending)
+	{
+		if (ending.size() > value.size()) return false;
+		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 	}
 
 	int fillTileOfType = DEFAULT_TILE;
