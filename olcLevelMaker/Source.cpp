@@ -28,7 +28,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 	float mapMoveX, mapMoveY;
 	SpriteSheet font;
-	SpriteSheet tiles;
+	SpriteSheet* tiles;
 	wstring characters = L" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefgijklmnopqrstuvwxyz{|}~";
 	
 	olcSprite fillIcon;
@@ -55,7 +55,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 	virtual bool OnUserCreate() {
 		font.Load(FONT_SPRITESHEET, 8, 8);
-		tiles.Load(TILE_SPRITESHEET, 16, 16);
+		// tiles.Load(TILE_SPRITESHEET, 16, 16);
 		
 		istringstream fillSprite(fillSpriteData);
 		int fillWidth, fillHeight;
@@ -72,14 +72,18 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 		level.Create(MAP_WIDTH, MAP_HEIGHT);
 		for (int i = 0; i < level.GetWidth() * level.GetHeight(); i++) {
+			level[i].SetLevel(&level);
 			level[i].SetSpriteId(DEFAULT_TILE);
 		}
 
+		level.LoadSpriteSheet(TILE_SPRITESHEET, TILE_WIDTH);
+		tiles = level.GetSpriteSheet();
+
 		uiWidth = 400 - uiBase;
-		tilesPerRow = uiWidth / tiles.GetTileWidth();
-		tilesPerColumn = (200 - 23) / tiles.GetTileHeight();
+		tilesPerRow = uiWidth / tiles->GetTileWidth();
+		tilesPerColumn = (200 - 23) / tiles->GetTileHeight();
 		tilesPerPage = tilesPerColumn * tilesPerRow;
-		pageCount = tiles.GetTileCount() / tilesPerPage;
+		pageCount = tiles->GetTileCount() / tilesPerPage;
 
 		return true;
 	}
@@ -107,7 +111,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				int screenX = x * TILE_WIDTH + worldOffsetX;
 				int screenY = y * TILE_WIDTH + worldOffsetY;
 				if (screenX < 0 || screenX >= 300 || screenY < 0 || screenY >= 200) continue;
-				DrawSprite(screenX, screenY, level[i].GetSprite(tiles));
+				DrawSprite(screenX, screenY, level[i].GetSprite());
 				if (grid) {
 					DrawLine(screenX, screenY, screenX + TILE_WIDTH, screenY, PIXEL_SOLID, BG_BLACK | FG_BLACK);
 					DrawLine(screenX, screenY, screenX, screenY + TILE_WIDTH, PIXEL_SOLID, BG_BLACK | FG_BLACK);
@@ -336,7 +340,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			olcSprite exportedSprite(level.GetWidth() * TILE_WIDTH, level.GetHeight() * TILE_WIDTH);
 			for (int y = 0; y < level.GetHeight(); y++) {
 				for (int x = 0; x < level.GetWidth(); x++) {
-					olcSprite* sprite = level[x + y * level.GetWidth()].GetSprite(tiles);
+					olcSprite* sprite = level[x + y * level.GetWidth()].GetSprite();
 					for (int sy = 0; sy < sprite->nHeight; sy++) {
 						for (int sx = 0; sx < sprite->nWidth; sx++) {
 							exportedSprite.SetColour(x * TILE_WIDTH + sx, y * TILE_WIDTH + sy, sprite->GetColour(sx, sy));
@@ -354,27 +358,27 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		// draw page
 		wstring pageText(L"TILES:");
 		if (pageCount == 0) {
-			pageText.append(std::to_wstring(tiles.GetTileCount()));
+			pageText.append(std::to_wstring(tiles->GetTileCount()));
 		}
 		else {
 			pageText.append(std::to_wstring(page));
 			pageText.append(L"/");
 			pageText.append(std::to_wstring(pageCount));
 			pageText.append(L"/");
-			pageText.append(std::to_wstring(tiles.GetTileCount()));
+			pageText.append(std::to_wstring(tiles->GetTileCount()));
 		}
 		DrawStringFont(uiBase + 5, 5, pageText);
 
 		// draw sprites in menu
 		int drawn = 0;
-		int toDraw = min(tilesPerPage, tiles.GetTileCount() - tilesPerPage * page);
+		int toDraw = min(tilesPerPage, tiles->GetTileCount() - tilesPerPage * page);
 		for (int row = 0; row < tilesPerColumn; row++) {
 			if (drawn >= toDraw) break;
-			int y = 23 + row * tiles.GetTileHeight();
+			int y = 23 + row * tiles->GetTileHeight();
 			for (int col = 0; col < tilesPerRow; col++) {
 				if (drawn >= toDraw) break;
-				int x = uiBase + col * tiles.GetTileWidth();
-				DrawSprite(x, y, tiles[(col + row * tilesPerRow) + tilesPerPage * page]);
+				int x = uiBase + col * tiles->GetTileWidth();
+				DrawSprite(x, y, tiles[0][(col + row * tilesPerRow) + tilesPerPage * page]);
 				drawn++;
 			}
 		}
@@ -383,8 +387,8 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		if (selectedSprite >= tilesPerPage * page && selectedSprite < tilesPerPage * page + tilesPerPage) {
 			int col = selectedSprite % tilesPerRow;
 			int row = (selectedSprite - col) / tilesPerRow;
-			int y = 23 + row * tiles.GetTileHeight();
-			int x = uiBase + col * tiles.GetTileWidth();
+			int y = 23 + row * tiles->GetTileHeight();
+			int x = uiBase + col * tiles->GetTileWidth();
 			DrawLine(x, y, x + 16, y, PIXEL_SOLID, BG_RED | FG_RED);
 			DrawLine(x, y, x, y + 16, PIXEL_SOLID, BG_RED | FG_RED);
 			DrawLine(x + 16, y, x + 16, y + 16, PIXEL_SOLID, BG_RED | FG_RED);
@@ -392,15 +396,15 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 
 		// are we in the selection menu
-		if (m_mousePosX >= uiBase && m_mousePosX < uiBase + tilesPerRow * tiles.GetTileWidth() && m_mousePosY > 28) {
+		if (m_mousePosX >= uiBase && m_mousePosX < uiBase + tilesPerRow * tiles->GetTileWidth() && m_mousePosY > 28) {
 			int menuX = m_mousePosX - uiBase;
 			int menuY = m_mousePosY - 28;
-			int col = menuX / tiles.GetTileWidth();
-			int row = menuY / tiles.GetTileHeight();
+			int col = menuX / tiles->GetTileWidth();
+			int row = menuY / tiles->GetTileHeight();
 			int index = col + row * tilesPerRow;
 			if (index < toDraw) {
-				int y = 23 + row * tiles.GetTileHeight();
-				int x = uiBase + col * tiles.GetTileWidth();
+				int y = 23 + row * tiles->GetTileHeight();
+				int x = uiBase + col * tiles->GetTileWidth();
 				DrawLine(x, y, x + 16, y, PIXEL_SOLID, BG_RED | FG_DARK_RED);
 				DrawLine(x, y, x, y + 16, PIXEL_SOLID, BG_RED | FG_DARK_RED);
 				DrawLine(x + 16, y, x + 16, y + 16, PIXEL_SOLID, BG_RED | FG_DARK_RED);

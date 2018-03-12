@@ -120,10 +120,12 @@
     <ClInclude Include="SpriteSheet.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Level.cpp" />
+    <ClCompile Include="olcConsoleGameEngine.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="SpriteSheet.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="fill.spr" />
     <None Include="javidx9_nesfont8x8.spr" />
     <None Include="toml_spritesheetdark.spr" />
   </ItemGroup>
