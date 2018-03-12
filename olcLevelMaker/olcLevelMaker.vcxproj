@@ -123,6 +123,7 @@
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fill.spr" />
     <None Include="javidx9_nesfont8x8.spr" />
     <None Include="toml_spritesheetdark.spr" />
   </ItemGroup>

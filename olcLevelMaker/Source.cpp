@@ -2,6 +2,7 @@
 
 #include <string>
 #include <queue>
+#include <sstream>
 
 #include "SpriteSheet.h"
 #include "Level.h"
@@ -21,12 +22,15 @@ enum class Tool {
 	LAST
 };
 
+string fillSpriteData = "8 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 15 9608 0 0 0 0 0 0 0 0 12 9608 12 9608 12 9608 12 9608 15 9608 0 0 0 0 0 0 12 9608 15 9608 12 9608 12 9608 12 9608 15 9608 0 0 0 0 12 9608 0 9608 15 9608 12 9608 12 9608 12 9608 15 9608 0 0 12 9608 0 9608 0 9608 15 9608 12 9608 15 9608 0 0 0 0 12 9608 0 0 0 9608 0 9608 15 9608 0 9608 0 0 0 0 0 0 0 0 0 0 0 9608 0 9608 0 0 0 0";
+
 class olcLevelMaker : public olcConsoleGameEngine {
 
 	float mapMoveX, mapMoveY;
 	SpriteSheet font;
 	SpriteSheet tiles;
 	wstring characters = L" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefgijklmnopqrstuvwxyz{|}~";
+	
 	olcSprite fillIcon;
 
 	Tool tool = Tool::TILES;
@@ -52,7 +56,19 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	virtual bool OnUserCreate() {
 		font.Load(FONT_SPRITESHEET, 8, 8);
 		tiles.Load(TILE_SPRITESHEET, 16, 16);
-		fillIcon.Load(L"fill.spr");
+		
+		istringstream fillSprite(fillSpriteData);
+		int fillWidth, fillHeight;
+		fillSprite >> fillWidth >> fillHeight;
+		fillIcon = olcSprite(fillWidth, fillHeight);
+		for (int sy = 0; sy < fillIcon.nHeight; sy++) {
+			for (int sx = 0; sx < fillIcon.nWidth; sx++) {
+				short color, glyph;
+				fillSprite >> color >> glyph;
+				fillIcon.SetColour(sx, sy, color);
+				fillIcon.SetGlyph(sx, sy, glyph);
+			}
+		}
 
 		level.Create(MAP_WIDTH, MAP_HEIGHT);
 		for (int i = 0; i < level.GetWidth() * level.GetHeight(); i++) {
