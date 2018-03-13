@@ -515,11 +515,9 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			pageText.append(std::to_wstring(tiles->GetTileCount()));
 		}
 		else {
-			pageText.append(std::to_wstring(page));
+			pageText.append(std::to_wstring(page + 1));
 			pageText.append(L"/");
 			pageText.append(std::to_wstring(pageCount));
-			pageText.append(L"/");
-			pageText.append(std::to_wstring(tiles->GetTileCount()));
 		}
 		DrawStringFont(uiBase + 5, 5, pageText);
 
