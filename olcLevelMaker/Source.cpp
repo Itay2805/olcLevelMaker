@@ -42,6 +42,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	int worldOffsetX = 0, worldOffsetY = 0;
 	bool grid = false;
 	bool floodMode = false;
+	bool inMenu = false;
 
 	wstring file = L"";
 
@@ -241,14 +242,22 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 
 		// are we in the world editor
-		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
+		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && !inMenu) {
 			// change the tile
-			if (m_mouse[0].bPressed) {
+			if (m_mouse[0].bHeld) {
 				if (floodMode || m_keys[VK_CONTROL].bHeld) {
 					FloorFillSolid(tileX, tileY);
 				}
 				else {
-					level[tileX + tileY * level.GetWidth()].SetSolid(!level[tileX + tileY * level.GetWidth()].IsSolid());
+					level[tileX + tileY * level.GetWidth()].SetSolid(true);
+				}
+			}
+			else if (m_mouse[1].bHeld) {
+				if (floodMode || m_keys[VK_CONTROL].bHeld) {
+					FloorFillSolid(tileX, tileY);
+				}
+				else {
+					level[tileX + tileY * level.GetWidth()].SetSolid(false);
 				}
 			}
 		}
