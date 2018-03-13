@@ -10,6 +10,7 @@ void SpriteSheet::Load(std::wstring file, int tileWidth, int tileHeight) {
 	int tileCountY = spritesheet->nHeight / tileHeight;
 	spriteCount = tileCountX * tileCountY;
 
+	delete[] sprites;
 	sprites = new olcSprite[spriteCount];
 
 	for (size_t i = 0; i < spriteCount; i++) {

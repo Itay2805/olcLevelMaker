@@ -22,7 +22,32 @@ enum class Tool {
 	LAST
 };
 
+// embeded fill icon meta, should have a better way to store this...
 string fillSpriteData = "8 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 15 9608 0 0 0 0 0 0 0 0 12 9608 12 9608 12 9608 12 9608 15 9608 0 0 0 0 0 0 12 9608 15 9608 12 9608 12 9608 12 9608 15 9608 0 0 0 0 12 9608 0 9608 15 9608 12 9608 12 9608 12 9608 15 9608 0 0 12 9608 0 9608 0 9608 15 9608 12 9608 15 9608 0 0 0 0 12 9608 0 0 0 9608 0 9608 15 9608 0 9608 0 0 0 0 0 0 0 0 0 0 0 9608 0 9608 0 0 0 0";
+
+
+enum class Popup {
+	NONE,
+	NEW_MAP_SIZE,
+};
+
+struct popup_t {
+	Popup popup = Popup::NONE;
+	bool menuActive = false;
+	struct {
+		wstring width;
+		wstring height;
+		int field; /// 0 - width, 1 - height
+	} newMapSize;
+
+	popup_t() {
+
+	}
+
+	~popup_t() {
+
+	}
+};
 
 class olcLevelMaker : public olcConsoleGameEngine {
 
@@ -42,14 +67,19 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	int worldOffsetX = 0, worldOffsetY = 0;
 	bool grid = false;
 	bool floodMode = false;
-	bool inMenu = false;
 
 	wstring file = L"";
+	wstring spriteSheetFile = TILE_SPRITESHEET;
+
+	popup_t popup;
 
 	void DrawStringFont(int x, int y, wstring characters) {
 		// will use ascii
 		for (wchar_t c : characters) {
 			// int index = this->characters.find(c);
+			if (c - ' ' >= font.GetTileCount()) {
+				continue;
+			}
 			DrawSprite(x, y, font[c - ' ']);
 			x += font.GetTileWidth();
 		}
@@ -130,90 +160,174 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			}
 		}
 
-		// fill the menu
-		Fill(uiBase, 0, 400, 200, ' ', BG_GREY | FG_BLACK);
-
-		if (tool == Tool::TILES) tilesTool(tileX, tileY);
-		if (tool == Tool::META) metaTool(tileX, tileY);
-		if (tool == Tool::EXPORT_IMPORT) exportAndImportTool();
-
-		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && m_mousePosX <= 300) {
-			// draw coords
-			wstring str(L"<");
-			str.append(std::to_wstring(tileX));
-			str.append(L", ");
-			str.append(std::to_wstring(tileY));
-			str.append(L">");
-			DrawStringFont(0, 0, str);
-
-			int yoff = worldOffsetY;
-			int xoff = worldOffsetX;
-
-			// draw hovered tile rect
-			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
-			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
-			DrawLine(tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
-			DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
-		}
-
-		int iconOffset = 0;
-		if (floodMode || m_keys[VK_CONTROL].bHeld) {
-			DrawSprite(2, 190, &fillIcon);
-			iconOffset += 10;
-		}
-
-		// world movement
-		if (m_keys[L'W'].bPressed) {
-			moved = true;
-			worldOffsetY -= 16;
-		}
-		else if (m_keys[L'S'].bPressed) {
-			moved = true;
-			worldOffsetY += 16;
-		}
-		else if (m_keys[L'A'].bPressed) {
-			moved = true;
-			worldOffsetX -= 16;
-		}
-		else if (m_keys[L'D'].bPressed) {
-			moved = true;
-			worldOffsetX += 16;
-		} else if (m_keys[VK_CONTROL].bHeld && m_keys[L'S'].bPressed) {
-			if (file.length() == 0) {
-				SaveLevel();
+		if (popup.menuActive) {
+			switch (popup.popup) {
+			case Popup::NEW_MAP_SIZE: {
+					static bool blink = false;
+					Fill(110, 70, 290, 150, ' ', FG_DARK_GREY | BG_DARK_GREY);
+					DrawStringFont(150, 75, L"New Map Size");
+					DrawStringFont(125, 90, L"Width");
+					DrawStringFont(210, 90, L"Height");
+					Fill(170, 130, 240, 140, ' ', FG_GREY | BG_GREY);
+					DrawStringFont(180, 131, L"Create");
+					switch (popup.newMapSize.field) {
+					case 0:
+						Fill(125, 100, 200, 108, ' ', FG_GREY | BG_GREY);
+						Fill(210, 100, 280, 108, ' ', FG_BLACK | BG_BLACK);
+						if (IsFocused()) {
+							if (GetKey(L'0').bPressed || GetKey(VK_NUMPAD0).bPressed) popup.newMapSize.width.append(L"0");
+							if (GetKey(L'1').bPressed || GetKey(VK_NUMPAD1).bPressed) popup.newMapSize.width.append(L"1");
+							if (GetKey(L'2').bPressed || GetKey(VK_NUMPAD2).bPressed) popup.newMapSize.width.append(L"2");
+							if (GetKey(L'3').bPressed || GetKey(VK_NUMPAD3).bPressed) popup.newMapSize.width.append(L"3");
+							if (GetKey(L'4').bPressed || GetKey(VK_NUMPAD4).bPressed) popup.newMapSize.width.append(L"4");
+							if (GetKey(L'5').bPressed || GetKey(VK_NUMPAD5).bPressed) popup.newMapSize.width.append(L"5");
+							if (GetKey(L'6').bPressed || GetKey(VK_NUMPAD6).bPressed) popup.newMapSize.width.append(L"6");
+							if (GetKey(L'7').bPressed || GetKey(VK_NUMPAD7).bPressed) popup.newMapSize.width.append(L"7");
+							if (GetKey(L'8').bPressed || GetKey(VK_NUMPAD8).bPressed) popup.newMapSize.width.append(L"8");
+							if (GetKey(L'9').bPressed || GetKey(VK_NUMPAD9).bPressed) popup.newMapSize.width.append(L"9");
+							if (GetKey(VK_BACK).bPressed) if(popup.newMapSize.width.length() != 0) popup.newMapSize.width = popup.newMapSize.width.substr(0, popup.newMapSize.width.size() - 1);
+						}
+						break;
+					case 1:
+						Fill(125, 100, 200, 108, ' ', FG_BLACK | BG_BLACK);
+						Fill(210, 100, 280, 108, ' ', FG_GREY | BG_GREY);
+						if (IsFocused()) {
+							if (GetKey(L'0').bPressed || GetKey(VK_NUMPAD0).bPressed) popup.newMapSize.height.append(L"0");
+							if (GetKey(L'1').bPressed || GetKey(VK_NUMPAD1).bPressed) popup.newMapSize.height.append(L"1");
+							if (GetKey(L'2').bPressed || GetKey(VK_NUMPAD2).bPressed) popup.newMapSize.height.append(L"2");
+							if (GetKey(L'3').bPressed || GetKey(VK_NUMPAD3).bPressed) popup.newMapSize.height.append(L"3");
+							if (GetKey(L'4').bPressed || GetKey(VK_NUMPAD4).bPressed) popup.newMapSize.height.append(L"4");
+							if (GetKey(L'5').bPressed || GetKey(VK_NUMPAD5).bPressed) popup.newMapSize.height.append(L"5");
+							if (GetKey(L'6').bPressed || GetKey(VK_NUMPAD6).bPressed) popup.newMapSize.height.append(L"6");
+							if (GetKey(L'7').bPressed || GetKey(VK_NUMPAD7).bPressed) popup.newMapSize.height.append(L"7");
+							if (GetKey(L'8').bPressed || GetKey(VK_NUMPAD8).bPressed) popup.newMapSize.height.append(L"8");
+							if (GetKey(L'9').bPressed || GetKey(VK_NUMPAD9).bPressed) popup.newMapSize.height.append(L"9");
+							if (GetKey(VK_BACK).bPressed) if (popup.newMapSize.height.length() != 0) popup.newMapSize.height = popup.newMapSize.height.substr(0, popup.newMapSize.height.size() - 1);
+						}
+						break;
+					default:
+						popup.newMapSize.field = 0;
+					}
+					DrawStringFont(125, 100, popup.newMapSize.width);
+					DrawStringFont(210, 100, popup.newMapSize.height);
+					if (m_mouse[0].bPressed) {
+						if (m_mousePosX > 125 && m_mousePosX < 200 && m_mousePosY > 100 && m_mousePosY < 108) {
+							popup.newMapSize.field = 0;
+						}
+						if (m_mousePosX > 210 && m_mousePosX < 280 && m_mousePosY > 100 && m_mousePosY < 108) {
+							popup.newMapSize.field = 1;
+						}
+						if (m_mousePosX > 170 && m_mousePosX < 240 && m_mousePosY > 130 && m_mousePosY < 140) {
+							// Create the map
+							popup.popup = Popup::NONE;
+							popup.menuActive = false;
+							int width = stoi(popup.newMapSize.width);
+							int height = stoi(popup.newMapSize.height);
+							if (width != 0 && height != 0) {
+								popup.newMapSize.width = L"";
+								popup.newMapSize.height = L"";
+								level.Create(width, height);
+								for (int i = 0; i < level.GetWidth() * level.GetHeight(); i++) {
+									level[i].SetLevel(&level);
+									level[i].SetSpriteId(DEFAULT_TILE);
+								}
+								level.LoadSpriteSheet(spriteSheetFile, TILE_WIDTH);
+								tiles = level.GetSpriteSheet();
+								file = L"";
+							}
+						}
+					}
+				}
+				break;
 			}
-			else {
-				level.Save(file);
+		}
+		else if(IsFocused()) {
+			// fill the menu
+			Fill(uiBase, 0, 400, 200, ' ', BG_GREY | FG_BLACK);
+
+			if (tool == Tool::TILES) tilesTool(tileX, tileY);
+			if (tool == Tool::META) metaTool(tileX, tileY);
+			if (tool == Tool::EXPORT_IMPORT) exportAndImportTool();
+
+			if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && m_mousePosX <= 300) {
+				// draw coords
+				wstring str(L"<");
+				str.append(std::to_wstring(tileX));
+				str.append(L", ");
+				str.append(std::to_wstring(tileY));
+				str.append(L">");
+				DrawStringFont(0, 0, str);
+
+				int yoff = worldOffsetY;
+				int xoff = worldOffsetX;
+
+				// draw hovered tile rect
+				DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+				DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+				DrawLine(tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+				DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
 			}
-		}
-		else if (m_keys[VK_CONTROL].bHeld && m_keys[L'L'].bPressed) {
-			LoadLevel();
-		}
-		else if (m_keys[L'T'].bPressed) {
-			tool = (Tool)((int)tool + 1);
-			if (tool == Tool::LAST) {
-				tool = Tool::TILES;
+
+			int iconOffset = 0;
+			if (floodMode || m_keys[VK_CONTROL].bHeld) {
+				DrawSprite(2, 190, &fillIcon);
+				iconOffset += 10;
 			}
-		}
-		else if (m_keys[L'G'].bPressed) {
-			grid = !grid;
-		}
-		else if (m_keys[L'F'].bPressed) {
-			floodMode = !floodMode;
-		}
-		else if (m_keys[VK_LEFT].bPressed) {
-			if (pageCount != 0) {
-				page--;
-				if (page < 0) {
-					page = 0;
+
+			// world movement
+			if (m_keys[L'W'].bPressed) {
+				moved = true;
+				worldOffsetY -= 16;
+			}
+			if (m_keys[L'S'].bPressed) {
+				moved = true;
+				worldOffsetY += 16;
+			}
+			if (m_keys[L'A'].bPressed) {
+				moved = true;
+				worldOffsetX -= 16;
+			}
+			if (m_keys[L'D'].bPressed) {
+				moved = true;
+				worldOffsetX += 16;
+			}
+			if (m_keys[VK_CONTROL].bHeld && m_keys[L'S'].bPressed) {
+				if (file.length() == 0) {
+					SaveLevel();
+				}
+				else {
+					level.Save(file);
 				}
 			}
-		}
-		else if (m_keys[VK_RIGHT].bPressed) {
-			if (pageCount != 0) {
-				page++;
-				if (page >= pageCount) {
-					page = pageCount - 1;
+			if (m_keys[VK_CONTROL].bHeld && m_keys[L'L'].bPressed) {
+				LoadLevel();
+			}
+			if (m_keys[L'T'].bPressed) {
+				tool = (Tool)((int)tool + 1);
+				if (tool == Tool::LAST) {
+					tool = Tool::TILES;
+				}
+			}
+			if (m_keys[L'G'].bPressed) {
+				grid = !grid;
+			}
+			if (m_keys[L'F'].bPressed) {
+				floodMode = !floodMode;
+			}
+			if (m_keys[VK_LEFT].bPressed) {
+				if (pageCount != 0) {
+					page--;
+					if (page < 0) {
+						page = 0;
+					}
+				}
+			}
+			if (m_keys[VK_RIGHT].bPressed) {
+				if (pageCount != 0) {
+					page++;
+					if (page >= pageCount) {
+						page = pageCount - 1;
+					}
 				}
 			}
 		}
@@ -242,7 +356,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 
 		// are we in the world editor
-		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && !inMenu) {
+		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && !popup.menuActive) {
 			switch (selectedMetaTool) {
 			case MetaTools::SOLID_BRUSH:
 				{
@@ -270,14 +384,20 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	}
 
 	void exportAndImportTool() {
-		DrawStringFont(uiBase + 1, 15, L"IMPORT:");
-		DrawStringFont(uiBase + 6, 25, L"LEVEL");
-		DrawStringFont(uiBase + 6, 35, L"SPRITESHEET");
-		DrawStringFont(uiBase + 1, 65, L"EXPORT:");
-		DrawStringFont(uiBase + 6, 75, L"LEVEL");
-		DrawStringFont(uiBase + 6, 85, L"SPRITE");
+		DrawStringFont(uiBase + 6, 5, L"NEW");
+		DrawStringFont(uiBase + 1, 25, L"IMPORT:");
+		DrawStringFont(uiBase + 6, 35, L"LEVEL");
+		DrawStringFont(uiBase + 6, 45, L"SPRITESHEET");
+		DrawStringFont(uiBase + 1, 75, L"EXPORT:");
+		DrawStringFont(uiBase + 6, 85, L"LEVEL");
+		DrawStringFont(uiBase + 6, 95, L"SPRITE");
+		if (popup.menuActive) return;
 		if (m_mouse[0].bPressed) {
-			
+			// new
+			if (m_mousePosX > uiBase + 6 && m_mousePosX < 400 && m_mousePosY > 5 && m_mousePosY < 5 + 8) {
+				popup.menuActive = true;
+				popup.popup = Popup::NEW_MAP_SIZE;
+			}
 			// import level
 			if (m_mousePosX > uiBase + 6 && m_mousePosX < 400 && m_mousePosY > 25 && m_mousePosY < 25 + 8) {
 				LoadLevel();
@@ -310,7 +430,9 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		ofn.lpstrFilter = L"olcSprite (*.spr)\0*.spr\0Any File\0*.*\0";
 		ofn.lpstrTitle = L"Import Sprite Sheet";
 		if (GetOpenFileName(&ofn)) {
+			spriteSheetFile = filename;
 			level.LoadSpriteSheet(filename, 16);
+			tiles = level.GetSpriteSheet();
 		}
 	}
 
@@ -428,9 +550,9 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 
 		// are we in the selection menu
-		if (m_mousePosX >= uiBase && m_mousePosX < uiBase + tilesPerRow * tiles->GetTileWidth() && m_mousePosY > 28 && !inMenu) {
-			int menuX = m_mousePosX - uiBase;
-			int menuY = m_mousePosY - 28;
+		if (GetMouseX() >= uiBase && GetMouseX() < uiBase + tilesPerRow * tiles->GetTileWidth() && GetMouseY() > 28 && !popup.menuActive) {
+			int menuX = GetMouseX() - uiBase;
+			int menuY = GetMouseY() - 28;
 			int col = menuX / tiles->GetTileWidth();
 			int row = menuY / tiles->GetTileHeight();
 			int index = col + row * tilesPerRow;
@@ -448,7 +570,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 
 		// are we in the world editor
-		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && !inMenu) {
+		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && !popup.menuActive && GetMouseX() <= 300) {
 			// change the tile
 			if (m_mouse[0].bHeld) {
 				if (floodMode || m_keys[VK_CONTROL].bHeld) {

@@ -54,6 +54,11 @@ private:
 	int mapWidth, mapHeight;
 
 public:
+
+	~Level() {
+		delete[] tiles;
+	}
+
 	Level() 
 	{
 	}
@@ -86,6 +91,7 @@ public:
 	void Create(int mapWidth, int mapHeight) {
 		this->mapWidth = mapWidth;
 		this->mapHeight = mapHeight;
+		delete[] tiles;
 		tiles = new Tile[mapWidth * mapHeight];
 	}
 
