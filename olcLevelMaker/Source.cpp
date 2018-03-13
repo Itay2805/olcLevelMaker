@@ -243,22 +243,28 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 		// are we in the world editor
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && !inMenu) {
-			// change the tile
-			if (m_mouse[0].bHeld) {
-				if (floodMode || m_keys[VK_CONTROL].bHeld) {
-					FloorFillSolid(tileX, tileY);
+			switch (selectedMetaTool) {
+			case MetaTools::SOLID_BRUSH:
+				{
+					// change the tile
+					if (m_mouse[0].bHeld) {
+						if (floodMode || m_keys[VK_CONTROL].bHeld) {
+							FloorFillSolid(tileX, tileY, true);
+						}
+						else {
+							level[tileX + tileY * level.GetWidth()].SetSolid(true);
+						}
+					}
+					else if (m_mouse[1].bHeld) {
+						if (floodMode || m_keys[VK_CONTROL].bHeld) {
+							FloorFillSolid(tileX, tileY, false);
+						}
+						else {
+							level[tileX + tileY * level.GetWidth()].SetSolid(false);
+						}
+					}
 				}
-				else {
-					level[tileX + tileY * level.GetWidth()].SetSolid(true);
-				}
-			}
-			else if (m_mouse[1].bHeld) {
-				if (floodMode || m_keys[VK_CONTROL].bHeld) {
-					FloorFillSolid(tileX, tileY);
-				}
-				else {
-					level[tileX + tileY * level.GetWidth()].SetSolid(false);
-				}
+				break;
 			}
 		}
 	}
@@ -468,15 +474,15 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	int fillTileOfType = DEFAULT_TILE;
 	bool solidStart = false;
 
-	void FloorFillSolid(int x, int y) {
+	void FloorFillSolid(int x, int y, bool fill) {
 		fillTileOfType = level[x + y * level.GetWidth()].GetSpriteId();
-		solidStart = !level[x + y * level.GetWidth()].IsSolid();
+		solidStart = fill;
 		queue<pair<int, int>> q;
 		q.push(pair<int, int>(x, y));
 		while (q.size() != 0) {
 			pair<int, int> xy = q.front();
 			q.pop();
-			level[xy.first + xy.second * level.GetWidth()].SetSolid(solidStart);
+			level[xy.first + xy.second * level.GetWidth()].SetSolid(fill);
 			if (ShouldFillSolid(xy.first + 1, xy.second)) q.push(pair<int, int>(xy.first + 1, xy.second));
 			if (ShouldFillSolid(xy.first - 1, xy.second)) q.push(pair<int, int>(xy.first - 1, xy.second));
 			if (ShouldFillSolid(xy.first, xy.second + 1)) q.push(pair<int, int>(xy.first, xy.second + 1));
