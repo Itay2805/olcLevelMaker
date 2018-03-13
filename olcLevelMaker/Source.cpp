@@ -422,7 +422,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 
 		// are we in the selection menu
-		if (m_mousePosX >= uiBase && m_mousePosX < uiBase + tilesPerRow * tiles->GetTileWidth() && m_mousePosY > 28) {
+		if (m_mousePosX >= uiBase && m_mousePosX < uiBase + tilesPerRow * tiles->GetTileWidth() && m_mousePosY > 28 && !inMenu) {
 			int menuX = m_mousePosX - uiBase;
 			int menuY = m_mousePosY - 28;
 			int col = menuX / tiles->GetTileWidth();
@@ -442,7 +442,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 
 		// are we in the world editor
-		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight()) {
+		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && !inMenu) {
 			// change the tile
 			if (m_mouse[0].bHeld) {
 				if (floodMode || m_keys[VK_CONTROL].bHeld) {
@@ -451,6 +451,9 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				else {
 					level[tileX + tileY * level.GetWidth()].SetSpriteId(selectedSprite);
 				}
+			}
+			else if (m_mouse[1].bPressed) {
+				selectedSprite = level[tileX + tileY * level.GetWidth()].GetSpriteId();
 			}
 		}
 
