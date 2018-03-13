@@ -46,9 +46,10 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	wstring file = L"";
 
 	void DrawStringFont(int x, int y, wstring characters) {
+		// will use ascii
 		for (wchar_t c : characters) {
-			int index = this->characters.find(c);
-			DrawSprite(x, y, font[index]);
+			// int index = this->characters.find(c);
+			DrawSprite(x, y, font[c - ' ']);
 			x += font.GetTileWidth();
 		}
 	}
@@ -161,19 +162,19 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 
 		// world movement
-		if (m_keys[VK_UP].bPressed) {
+		if (m_keys[L'W'].bPressed) {
 			moved = true;
 			worldOffsetY -= 16;
 		}
-		else if (m_keys[VK_DOWN].bPressed) {
+		else if (m_keys[L'S'].bPressed) {
 			moved = true;
 			worldOffsetY += 16;
 		}
-		else if (m_keys[VK_LEFT].bPressed) {
+		else if (m_keys[L'A'].bPressed) {
 			moved = true;
 			worldOffsetX -= 16;
 		}
-		else if (m_keys[VK_RIGHT].bPressed) {
+		else if (m_keys[L'D'].bPressed) {
 			moved = true;
 			worldOffsetX += 16;
 		} else if (m_keys[VK_CONTROL].bHeld && m_keys[L'S'].bPressed) {
@@ -198,6 +199,22 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 		else if (m_keys[L'F'].bPressed) {
 			floodMode = !floodMode;
+		}
+		else if (m_keys[VK_LEFT].bPressed) {
+			if (pageCount != 0) {
+				page--;
+				if (page < 0) {
+					page = 0;
+				}
+			}
+		}
+		else if (m_keys[VK_RIGHT].bPressed) {
+			if (pageCount != 0) {
+				page++;
+				if (page >= pageCount) {
+					page = pageCount - 1;
+				}
+			}
 		}
 
 		return true;
