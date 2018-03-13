@@ -9,7 +9,7 @@
 
 #define TILE_WIDTH 16
 #define FONT_SPRITESHEET L"javidx9_nesfont8x8.spr"
-#define TILE_SPRITESHEET L"toml_spritesheetdark.spr"
+#define TILE_SPRITESHEET L"loztheme.png.spr"
 #define MAP_WIDTH 10
 #define MAP_HEIGHT 10
 #define LEVEL_FILE_NAME L"level.lvl"
@@ -115,7 +115,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		tilesPerRow = uiWidth / tiles->GetTileWidth();
 		tilesPerColumn = (200 - 23) / tiles->GetTileHeight();
 		tilesPerPage = tilesPerColumn * tilesPerRow;
-		pageCount = tiles->GetTileCount() / tilesPerPage;
+		pageCount = (tiles->GetTileCount() / tilesPerPage) + 1;
 
 		return true;
 	}
@@ -275,21 +275,21 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			}
 
 			// world movement
-			if (m_keys[L'W'].bPressed) {
-				moved = true;
-				worldOffsetY -= 16;
-			}
-			if (m_keys[L'S'].bPressed) {
+			if (GetKey(L'W').bPressed || (GetKey(VK_SHIFT).bHeld && GetKey(L'W').bHeld)) {
 				moved = true;
 				worldOffsetY += 16;
 			}
-			if (m_keys[L'A'].bPressed) {
+			if (GetKey(L'S').bPressed || (GetKey(VK_SHIFT).bHeld && GetKey(L'S').bHeld)) {
 				moved = true;
-				worldOffsetX -= 16;
+				worldOffsetY -= 16;
 			}
-			if (m_keys[L'D'].bPressed) {
+			if (GetKey(L'A').bPressed || (GetKey(VK_SHIFT).bHeld && GetKey(L'A').bHeld)) {
 				moved = true;
 				worldOffsetX += 16;
+			}
+			if (GetKey(L'D').bPressed || (GetKey(VK_SHIFT).bHeld && GetKey(L'D').bHeld)) {
+				moved = true;
+				worldOffsetX -= 16;
 			}
 			if (m_keys[VK_CONTROL].bHeld && m_keys[L'S'].bPressed) {
 				if (file.length() == 0) {
@@ -541,6 +541,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		if (selectedSprite >= tilesPerPage * page && selectedSprite < tilesPerPage * page + tilesPerPage) {
 			int col = selectedSprite % tilesPerRow;
 			int row = (selectedSprite - col) / tilesPerRow;
+			row = row - page * tilesPerColumn;
 			int y = 23 + row * tiles->GetTileHeight();
 			int x = uiBase + col * tiles->GetTileWidth();
 			DrawLine(x, y, x + 16, y, PIXEL_SOLID, BG_RED | FG_RED);
@@ -555,15 +556,13 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			int menuY = GetMouseY() - 28;
 			int col = menuX / tiles->GetTileWidth();
 			int row = menuY / tiles->GetTileHeight();
-			int index = col + row * tilesPerRow;
-			if (index < toDraw) {
-				int y = 23 + row * tiles->GetTileHeight();
-				int x = uiBase + col * tiles->GetTileWidth();
-				DrawLine(x, y, x + 16, y, PIXEL_SOLID, BG_RED | FG_DARK_RED);
-				DrawLine(x, y, x, y + 16, PIXEL_SOLID, BG_RED | FG_DARK_RED);
-				DrawLine(x + 16, y, x + 16, y + 16, PIXEL_SOLID, BG_RED | FG_DARK_RED);
-				DrawLine(x, y + 16, x + 16, y + 16, PIXEL_SOLID, BG_RED | FG_DARK_RED);
-			}
+			int index = (col + row * tilesPerRow) + page * tilesPerPage;
+			int y = 23 + row * tiles->GetTileHeight();
+			int x = uiBase + col * tiles->GetTileWidth();
+			DrawLine(x, y, x + 16, y, PIXEL_SOLID, BG_RED | FG_DARK_RED);
+			DrawLine(x, y, x, y + 16, PIXEL_SOLID, BG_RED | FG_DARK_RED);
+			DrawLine(x + 16, y, x + 16, y + 16, PIXEL_SOLID, BG_RED | FG_DARK_RED);
+			DrawLine(x, y + 16, x + 16, y + 16, PIXEL_SOLID, BG_RED | FG_DARK_RED);
 			if (m_mouse[0].bPressed) {
 				selectedSprite = index;
 			}

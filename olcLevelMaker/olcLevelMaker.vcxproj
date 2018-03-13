@@ -127,7 +127,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="javidx9_nesfont8x8.spr" />
-    <None Include="toml_spritesheetdark.spr" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
