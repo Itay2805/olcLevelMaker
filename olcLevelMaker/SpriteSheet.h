@@ -9,8 +9,8 @@ private:
 	olcSprite* spritesheet;
 
 	olcSprite* sprites;
-	size_t spriteCount;
-	size_t tileWidth, tileHeight;
+	int spriteCount;
+	int tileWidth, tileHeight;
 
 public:
 
@@ -21,19 +21,19 @@ public:
 
 	SpriteSheet() {}
 
-	SpriteSheet(std::wstring file, int tileWidth, int tileHeight = -1) {
+	SpriteSheet(const wstring& file, int tileWidth, int tileHeight = -1) {
 		Load(file, tileWidth, tileHeight);
 	}
 
-	void Load(std::wstring file, int tileWidth, int tileHeight);
+	void Load(const wstring& file, int tileWidth, int tileHeight);
 
-	olcSprite* operator[](size_t index) const {
+	olcSprite* operator[](int index) const {
 		return &sprites[index];
 	}
 
-	inline size_t GetTileWidth() const { return this->tileWidth; }
-	inline size_t GetTileHeight() const { return this->tileHeight; }
-	inline size_t GetTileCount() const { return this->spriteCount; }
+	inline int GetTileWidth() const { return this->tileWidth; }
+	inline int GetTileHeight() const { return this->tileHeight; }
+	inline int GetTileCount() const { return this->spriteCount; }
 
 public:
 

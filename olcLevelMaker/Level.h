@@ -12,13 +12,11 @@ class Level;
 class Tile {
 private:
 	Level * level = nullptr;
-	int spriteId;
+	int spriteId = 0;
 	bool solid = false;
 
 public:
-	Tile() {
-		spriteId = 0;
-	}
+	Tile() {}
 
 	Tile(int spriteId)
 		: spriteId(spriteId)
@@ -73,18 +71,18 @@ public:
 		}
 	}
 
-	Level(wstring map)
+	Level(const wstring& map)
 	{
 		Load(map);
 	}
 
-	Level(wstring map, wstring spriteSheet, int tileSize)
+	Level(const wstring& map, const wstring& spriteSheet, int tileSize)
 	{
 		Load(map);
 		LoadSpriteSheet(spriteSheet, tileSize);
 	}
 
-	void LoadSpriteSheet(wstring map, int tileSize) {
+	void LoadSpriteSheet(const wstring& map, int tileSize) {
 		spritesheet.Load(map, tileSize, tileSize);
 	}
 
@@ -95,8 +93,8 @@ public:
 		tiles = new Tile[mapWidth * mapHeight];
 	}
 
-	void Load(wstring mapFile);
-	void Save(wstring mapFile);
+	void Load(const wstring& mapFile);
+	void Save(const wstring& mapFile);
 
 	inline Tile& operator[](int index) const { return tiles[index]; }
 

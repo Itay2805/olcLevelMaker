@@ -9,7 +9,7 @@ olcSprite* Tile::GetSprite() {
 	return spr[0][spriteId];
 }
 
-void Level::Load(wstring mapFile) {
+void Level::Load(const wstring& mapFile) {
 	if (tiles != nullptr) {
 		delete[] tiles;
 	}
@@ -26,7 +26,7 @@ void Level::Load(wstring mapFile) {
 	}
 }
 
-void Level::Save(wstring mapFile) {
+void Level::Save(const wstring& mapFile) {
 	ofstream map(mapFile, ios::out | ios::binary);
 	if (map.is_open()) {
 		map << mapWidth << " " << mapHeight << "\n";
