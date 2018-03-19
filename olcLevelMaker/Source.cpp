@@ -25,7 +25,6 @@ enum class Tool {
 // embeded fill icon meta, should have a better way to store this...
 string fillSpriteData = "8 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 15 9608 0 0 0 0 0 0 0 0 12 9608 12 9608 12 9608 12 9608 15 9608 0 0 0 0 0 0 12 9608 15 9608 12 9608 12 9608 12 9608 15 9608 0 0 0 0 12 9608 0 9608 15 9608 12 9608 12 9608 12 9608 15 9608 0 0 12 9608 0 9608 0 9608 15 9608 12 9608 15 9608 0 0 0 0 12 9608 0 0 0 9608 0 9608 15 9608 0 9608 0 0 0 0 0 0 0 0 0 0 0 9608 0 9608 0 0 0 0";
 
-
 enum class Popup {
 	NONE,
 	NEW_MAP_SIZE,
@@ -73,7 +72,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 	popup_t popup;
 
-	void DrawStringFont(int x, int y, wstring characters) {
+	void DrawStringFont(int x, int y, const wstring& characters) {
 		// will use ascii
 		for (wchar_t c : characters) {
 			// int index = this->characters.find(c);
@@ -108,8 +107,18 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			level[i].SetSpriteId(DEFAULT_TILE);
 		}
 
-		level.LoadSpriteSheet(TILE_SPRITESHEET, TILE_WIDTH);
-		tiles = level.GetSpriteSheet();
+		// search for the default sprite sheet
+		fstream spriteFile(TILE_SPRITESHEET);
+		if (!spriteFile.good()) {
+			ImportSpriteSheet();
+		}
+		else {
+			level.LoadSpriteSheet(TILE_SPRITESHEET, TILE_WIDTH);
+			tiles = level.GetSpriteSheet();
+		}
+		if (spriteFile.is_open()) {
+			spriteFile.close();
+		}
 
 		uiWidth = 400 - uiBase;
 		tilesPerRow = uiWidth / tiles->GetTileWidth();
@@ -279,7 +288,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				moved = true;
 				worldOffsetY += 16;
 			}
-			if (GetKey(L'S').bPressed || (GetKey(VK_SHIFT).bHeld && GetKey(L'S').bHeld)) {
+			if ((!m_keys[VK_CONTROL].bHeld && GetKey(L'S').bPressed) || (GetKey(VK_SHIFT).bHeld && GetKey(L'S').bHeld)) {
 				moved = true;
 				worldOffsetY -= 16;
 			}
