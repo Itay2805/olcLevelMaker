@@ -26,6 +26,12 @@ This is a tool for editing levels and maps for [olcConsoleGameEngine]()
 - Selecting Hovered Tile: `right click`
 - Quick Flood Fill: `CTRL + left click`
 - Changing tiles page: `left arrow` and `right arrow`
+- Selection rect: hold `CTRL` and click on the first and second position, then release `CTRL`
+
+### In Selection Rect
+while selection rect is on you can not draw outside of it. To cancel it press `ESC`.
+
+if you press `BACKSPACE` it will fill the selection rect with the selected tile.
 
 ## Tile Meta Menu
 First you need to select which meta tool you want to use

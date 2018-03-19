@@ -65,6 +65,10 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	bool grid = false;
 	bool floodMode = false;
 
+	bool pickedFirst = false, pickedSecond = false;
+	pair<int, int> startRec;
+	pair<int, int> endRex;
+
 	wstring file = L"";
 	wstring spriteSheetFile = TILE_SPRITESHEET;
 
@@ -170,81 +174,85 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		if (popup.menuActive) {
 			switch (popup.popup) {
 			case Popup::NEW_MAP_SIZE: {
-					static bool blink = false;
-					Fill(110, 70, 290, 150, ' ', FG_DARK_GREY | BG_DARK_GREY);
-					DrawStringFont(150, 75, L"New Map Size");
-					DrawStringFont(125, 90, L"Width");
-					DrawStringFont(210, 90, L"Height");
-					Fill(170, 130, 240, 140, ' ', FG_GREY | BG_GREY);
-					DrawStringFont(180, 131, L"Create");
-					switch (popup.newMapSize.field) {
-					case 0:
-						Fill(125, 100, 200, 108, ' ', FG_GREY | BG_GREY);
-						Fill(210, 100, 280, 108, ' ', FG_BLACK | BG_BLACK);
-						if (IsFocused()) {
-							if (GetKey(L'0').bPressed || GetKey(VK_NUMPAD0).bPressed) popup.newMapSize.width.append(L"0");
-							if (GetKey(L'1').bPressed || GetKey(VK_NUMPAD1).bPressed) popup.newMapSize.width.append(L"1");
-							if (GetKey(L'2').bPressed || GetKey(VK_NUMPAD2).bPressed) popup.newMapSize.width.append(L"2");
-							if (GetKey(L'3').bPressed || GetKey(VK_NUMPAD3).bPressed) popup.newMapSize.width.append(L"3");
-							if (GetKey(L'4').bPressed || GetKey(VK_NUMPAD4).bPressed) popup.newMapSize.width.append(L"4");
-							if (GetKey(L'5').bPressed || GetKey(VK_NUMPAD5).bPressed) popup.newMapSize.width.append(L"5");
-							if (GetKey(L'6').bPressed || GetKey(VK_NUMPAD6).bPressed) popup.newMapSize.width.append(L"6");
-							if (GetKey(L'7').bPressed || GetKey(VK_NUMPAD7).bPressed) popup.newMapSize.width.append(L"7");
-							if (GetKey(L'8').bPressed || GetKey(VK_NUMPAD8).bPressed) popup.newMapSize.width.append(L"8");
-							if (GetKey(L'9').bPressed || GetKey(VK_NUMPAD9).bPressed) popup.newMapSize.width.append(L"9");
-							if (GetKey(VK_BACK).bPressed) if(popup.newMapSize.width.length() != 0) popup.newMapSize.width = popup.newMapSize.width.substr(0, popup.newMapSize.width.size() - 1);
-						}
-						break;
-					case 1:
-						Fill(125, 100, 200, 108, ' ', FG_BLACK | BG_BLACK);
-						Fill(210, 100, 280, 108, ' ', FG_GREY | BG_GREY);
-						if (IsFocused()) {
-							if (GetKey(L'0').bPressed || GetKey(VK_NUMPAD0).bPressed) popup.newMapSize.height.append(L"0");
-							if (GetKey(L'1').bPressed || GetKey(VK_NUMPAD1).bPressed) popup.newMapSize.height.append(L"1");
-							if (GetKey(L'2').bPressed || GetKey(VK_NUMPAD2).bPressed) popup.newMapSize.height.append(L"2");
-							if (GetKey(L'3').bPressed || GetKey(VK_NUMPAD3).bPressed) popup.newMapSize.height.append(L"3");
-							if (GetKey(L'4').bPressed || GetKey(VK_NUMPAD4).bPressed) popup.newMapSize.height.append(L"4");
-							if (GetKey(L'5').bPressed || GetKey(VK_NUMPAD5).bPressed) popup.newMapSize.height.append(L"5");
-							if (GetKey(L'6').bPressed || GetKey(VK_NUMPAD6).bPressed) popup.newMapSize.height.append(L"6");
-							if (GetKey(L'7').bPressed || GetKey(VK_NUMPAD7).bPressed) popup.newMapSize.height.append(L"7");
-							if (GetKey(L'8').bPressed || GetKey(VK_NUMPAD8).bPressed) popup.newMapSize.height.append(L"8");
-							if (GetKey(L'9').bPressed || GetKey(VK_NUMPAD9).bPressed) popup.newMapSize.height.append(L"9");
-							if (GetKey(VK_BACK).bPressed) if (popup.newMapSize.height.length() != 0) popup.newMapSize.height = popup.newMapSize.height.substr(0, popup.newMapSize.height.size() - 1);
-						}
-						break;
-					default:
+
+#pragma region New Map Size Popup
+				Fill(110, 70, 290, 150, ' ', FG_DARK_GREY | BG_DARK_GREY);
+				DrawStringFont(150, 75, L"New Map Size");
+				DrawStringFont(125, 90, L"Width");
+				DrawStringFont(210, 90, L"Height");
+				Fill(170, 130, 240, 140, ' ', FG_GREY | BG_GREY);
+				DrawStringFont(180, 131, L"Create");
+				switch (popup.newMapSize.field) {
+				case 0:
+					Fill(125, 100, 200, 108, ' ', FG_GREY | BG_GREY);
+					Fill(210, 100, 280, 108, ' ', FG_BLACK | BG_BLACK);
+					if (IsFocused()) {
+						if (GetKey(L'0').bPressed || GetKey(VK_NUMPAD0).bPressed) popup.newMapSize.width.append(L"0");
+						if (GetKey(L'1').bPressed || GetKey(VK_NUMPAD1).bPressed) popup.newMapSize.width.append(L"1");
+						if (GetKey(L'2').bPressed || GetKey(VK_NUMPAD2).bPressed) popup.newMapSize.width.append(L"2");
+						if (GetKey(L'3').bPressed || GetKey(VK_NUMPAD3).bPressed) popup.newMapSize.width.append(L"3");
+						if (GetKey(L'4').bPressed || GetKey(VK_NUMPAD4).bPressed) popup.newMapSize.width.append(L"4");
+						if (GetKey(L'5').bPressed || GetKey(VK_NUMPAD5).bPressed) popup.newMapSize.width.append(L"5");
+						if (GetKey(L'6').bPressed || GetKey(VK_NUMPAD6).bPressed) popup.newMapSize.width.append(L"6");
+						if (GetKey(L'7').bPressed || GetKey(VK_NUMPAD7).bPressed) popup.newMapSize.width.append(L"7");
+						if (GetKey(L'8').bPressed || GetKey(VK_NUMPAD8).bPressed) popup.newMapSize.width.append(L"8");
+						if (GetKey(L'9').bPressed || GetKey(VK_NUMPAD9).bPressed) popup.newMapSize.width.append(L"9");
+						if (GetKey(VK_BACK).bPressed) if (popup.newMapSize.width.length() != 0) popup.newMapSize.width = popup.newMapSize.width.substr(0, popup.newMapSize.width.size() - 1);
+					}
+					break;
+				case 1:
+					Fill(125, 100, 200, 108, ' ', FG_BLACK | BG_BLACK);
+					Fill(210, 100, 280, 108, ' ', FG_GREY | BG_GREY);
+					if (IsFocused()) {
+						if (GetKey(L'0').bPressed || GetKey(VK_NUMPAD0).bPressed) popup.newMapSize.height.append(L"0");
+						if (GetKey(L'1').bPressed || GetKey(VK_NUMPAD1).bPressed) popup.newMapSize.height.append(L"1");
+						if (GetKey(L'2').bPressed || GetKey(VK_NUMPAD2).bPressed) popup.newMapSize.height.append(L"2");
+						if (GetKey(L'3').bPressed || GetKey(VK_NUMPAD3).bPressed) popup.newMapSize.height.append(L"3");
+						if (GetKey(L'4').bPressed || GetKey(VK_NUMPAD4).bPressed) popup.newMapSize.height.append(L"4");
+						if (GetKey(L'5').bPressed || GetKey(VK_NUMPAD5).bPressed) popup.newMapSize.height.append(L"5");
+						if (GetKey(L'6').bPressed || GetKey(VK_NUMPAD6).bPressed) popup.newMapSize.height.append(L"6");
+						if (GetKey(L'7').bPressed || GetKey(VK_NUMPAD7).bPressed) popup.newMapSize.height.append(L"7");
+						if (GetKey(L'8').bPressed || GetKey(VK_NUMPAD8).bPressed) popup.newMapSize.height.append(L"8");
+						if (GetKey(L'9').bPressed || GetKey(VK_NUMPAD9).bPressed) popup.newMapSize.height.append(L"9");
+						if (GetKey(VK_BACK).bPressed) if (popup.newMapSize.height.length() != 0) popup.newMapSize.height = popup.newMapSize.height.substr(0, popup.newMapSize.height.size() - 1);
+					}
+					break;
+				default:
+					popup.newMapSize.field = 0;
+				}
+				DrawStringFont(125, 100, popup.newMapSize.width);
+				DrawStringFont(210, 100, popup.newMapSize.height);
+				if (m_mouse[0].bPressed) {
+					if (m_mousePosX > 125 && m_mousePosX < 200 && m_mousePosY > 100 && m_mousePosY < 108) {
 						popup.newMapSize.field = 0;
 					}
-					DrawStringFont(125, 100, popup.newMapSize.width);
-					DrawStringFont(210, 100, popup.newMapSize.height);
-					if (m_mouse[0].bPressed) {
-						if (m_mousePosX > 125 && m_mousePosX < 200 && m_mousePosY > 100 && m_mousePosY < 108) {
-							popup.newMapSize.field = 0;
-						}
-						if (m_mousePosX > 210 && m_mousePosX < 280 && m_mousePosY > 100 && m_mousePosY < 108) {
-							popup.newMapSize.field = 1;
-						}
-						if (m_mousePosX > 170 && m_mousePosX < 240 && m_mousePosY > 130 && m_mousePosY < 140) {
-							// Create the map
-							popup.popup = Popup::NONE;
-							popup.menuActive = false;
-							int width = stoi(popup.newMapSize.width);
-							int height = stoi(popup.newMapSize.height);
-							if (width != 0 && height != 0) {
-								popup.newMapSize.width = L"";
-								popup.newMapSize.height = L"";
-								level.Create(width, height);
-								for (int i = 0; i < level.GetWidth() * level.GetHeight(); i++) {
-									level[i].SetLevel(&level);
-									level[i].SetSpriteId(DEFAULT_TILE);
-								}
-								level.LoadSpriteSheet(spriteSheetFile, TILE_WIDTH);
-								tiles = level.GetSpriteSheet();
-								file = L"";
+					if (m_mousePosX > 210 && m_mousePosX < 280 && m_mousePosY > 100 && m_mousePosY < 108) {
+						popup.newMapSize.field = 1;
+					}
+					if (m_mousePosX > 170 && m_mousePosX < 240 && m_mousePosY > 130 && m_mousePosY < 140) {
+						// Create the map
+						popup.popup = Popup::NONE;
+						popup.menuActive = false;
+						int width = stoi(popup.newMapSize.width);
+						int height = stoi(popup.newMapSize.height);
+						if (width != 0 && height != 0) {
+							popup.newMapSize.width = L"";
+							popup.newMapSize.height = L"";
+							level.Create(width, height);
+							for (int i = 0; i < level.GetWidth() * level.GetHeight(); i++) {
+								level[i].SetLevel(&level);
+								level[i].SetSpriteId(DEFAULT_TILE);
 							}
+							level.LoadSpriteSheet(spriteSheetFile, TILE_WIDTH);
+							tiles = level.GetSpriteSheet();
+							file = L"";
 						}
 					}
 				}
+			}
+
+#pragma endregion
+
 				break;
 			}
 		}
@@ -252,9 +260,11 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			// fill the menu
 			Fill(uiBase, 0, 400, 200, ' ', BG_GREY | FG_BLACK);
 
-			if (tool == Tool::TILES) tilesTool(tileX, tileY);
-			if (tool == Tool::META) metaTool(tileX, tileY);
-			if (tool == Tool::EXPORT_IMPORT) exportAndImportTool();
+			if (!GetKey(VK_CONTROL).bHeld && ((pickedFirst && pickedSecond) || (!pickedFirst && !pickedSecond))) {
+				if (tool == Tool::TILES) tilesTool(tileX, tileY);
+				if (tool == Tool::META) metaTool(tileX, tileY);
+				if (tool == Tool::EXPORT_IMPORT) exportAndImportTool();
+			}
 
 			if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && m_mousePosX <= 300) {
 				// draw coords
@@ -266,17 +276,76 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				DrawStringFont(0, 0, str);
 
 				// draw hovered tile rect
-				DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
-				DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
-				DrawLine(tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
-				DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+				if (pickedFirst) {
+					int firstRectTileX = startRec.first;
+					int firstRectTileY = startRec.second;
+					int secondRectTileX = tileX;
+					int secondRectTileY = tileY;
+					if (pickedSecond) {
+						secondRectTileX = endRex.first;
+						secondRectTileY = endRex.second;
+					}
+
+					int rectWidth = abs(firstRectTileX - secondRectTileX);
+					int rectHeight = abs(firstRectTileY - secondRectTileY);
+					rectHeight++;
+					rectWidth++;
+
+					DrawLine(firstRectTileX * 16 + worldOffsetX, firstRectTileY * 16 + worldOffsetY, firstRectTileX * 16 + 16 * rectWidth + worldOffsetX, firstRectTileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+					DrawLine(firstRectTileX * 16 + worldOffsetX, firstRectTileY * 16 + worldOffsetY, firstRectTileX * 16 + worldOffsetX, firstRectTileY * 16 + 16 * rectHeight + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+					DrawLine(firstRectTileX * 16 + 16 * rectWidth + worldOffsetX, firstRectTileY * 16 + worldOffsetY, firstRectTileX * 16 + 16 * rectWidth + worldOffsetX, firstRectTileY * 16 + 16 * rectHeight + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+					DrawLine(firstRectTileX * 16 + worldOffsetX, firstRectTileY * 16 + 16 * rectHeight + worldOffsetY, firstRectTileX * 16 + 16 * rectWidth + worldOffsetX, firstRectTileY * 16 + 16 * rectHeight + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+				}
+				else {
+					DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+					DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+					DrawLine(tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+					DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+				}
+				
+				if (GetKey(VK_CONTROL).bHeld && GetMouse(0).bPressed) {
+					if (pickedFirst) {
+						if (pickedSecond) {
+							pickedSecond = false;
+							startRec = make_pair(tileX, tileY);
+						}
+						else {
+							pickedSecond = true;
+							endRex = make_pair(tileX, tileY);
+						}
+					}
+					else {
+						pickedFirst = true;
+						startRec = make_pair(tileX, tileY);
+					}
+				}
+
+				if (pickedFirst && !pickedSecond && !GetKey(VK_CONTROL).bHeld) {
+					pickedFirst = false;
+				}
+			}
+			else if(pickedFirst && pickedSecond) {
+				int firstRectTileX = startRec.first;
+				int firstRectTileY = startRec.second;
+				int secondRectTileX = endRex.first;
+				int secondRectTileY = endRex.second;
+				int rectWidth = abs(firstRectTileX - secondRectTileX);
+				int rectHeight = abs(firstRectTileY - secondRectTileY);
+				rectHeight++;
+				rectWidth++;
+				DrawLine(firstRectTileX * 16 + worldOffsetX, firstRectTileY * 16 + worldOffsetY, firstRectTileX * 16 + 16 * rectWidth + worldOffsetX, firstRectTileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+				DrawLine(firstRectTileX * 16 + worldOffsetX, firstRectTileY * 16 + worldOffsetY, firstRectTileX * 16 + worldOffsetX, firstRectTileY * 16 + 16 * rectHeight + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+				DrawLine(firstRectTileX * 16 + 16 * rectWidth + worldOffsetX, firstRectTileY * 16 + worldOffsetY, firstRectTileX * 16 + 16 * rectWidth + worldOffsetX, firstRectTileY * 16 + 16 * rectHeight + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
+				DrawLine(firstRectTileX * 16 + worldOffsetX, firstRectTileY * 16 + 16 * rectHeight + worldOffsetY, firstRectTileX * 16 + 16 * rectWidth + worldOffsetX, firstRectTileY * 16 + 16 * rectHeight + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
 			}
 
 			int iconOffset = 0;
-			if (floodMode || m_keys[VK_CONTROL].bHeld) {
+			if (floodMode || m_keys[VK_SHIFT].bHeld) {
 				DrawSprite(2, 190, &fillIcon);
 				iconOffset += 10;
 			}
+
+#pragma region Controls
 
 			// world movement
 #ifdef SMOOTH_WORLD_MOVEMENT
@@ -295,7 +364,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			if (GetKey(L'D').bHeld) {
 				moved = true;
 				worldOffsetX -= 32 * fElapsedTime * (GetKey(VK_SHIFT).bHeld ? 2 : 1);
-			}
+		}
 #else
 			if (GetKey(L'W').bPressed || (GetKey(VK_SHIFT).bHeld && GetKey(L'W').bHeld)) {
 				moved = true;
@@ -314,6 +383,10 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				worldOffsetX -= 16;
 			}
 #endif
+			if (GetKey(VK_ESCAPE).bPressed) {
+				pickedFirst = false;
+				pickedSecond = false;
+			}
 			if (m_keys[VK_CONTROL].bHeld && m_keys[L'S'].bPressed) {
 				if (file.length() == 0) {
 					SaveLevel();
@@ -353,10 +426,15 @@ class olcLevelMaker : public olcConsoleGameEngine {
 					}
 				}
 			}
+
+#pragma endregion
+
 		}
 
 		return true;
 	}
+
+#pragma region Meta Tool
 
 	enum class MetaTools {
 		SOLID_BRUSH
@@ -368,7 +446,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	void metaTool(int tileX, int tileY) {
 		wstring title(L"TILE META");
 		DrawStringFont(uiBase + 5, 5, title);
-		
+
 		wstring solidBrushText(L"");
 		if (selectedMetaTool == MetaTools::SOLID_BRUSH) {
 			solidBrushText.append(L" * ");
@@ -382,29 +460,33 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && !popup.menuActive) {
 			switch (selectedMetaTool) {
 			case MetaTools::SOLID_BRUSH:
-				{
-					// change the tile
-					if (m_mouse[0].bHeld) {
-						if (floodMode || m_keys[VK_CONTROL].bHeld) {
-							FloorFillSolid(tileX, tileY, true);
-						}
-						else {
-							level[tileX + tileY * level.GetWidth()].SetSolid(true);
-						}
+			{
+				// change the tile
+				if (m_mouse[0].bHeld) {
+					if (floodMode || m_keys[VK_SHIFT].bHeld) {
+						FloorFillSolid(tileX, tileY, true);
 					}
-					else if (m_mouse[1].bHeld) {
-						if (floodMode || m_keys[VK_CONTROL].bHeld) {
-							FloorFillSolid(tileX, tileY, false);
-						}
-						else {
-							level[tileX + tileY * level.GetWidth()].SetSolid(false);
-						}
+					else {
+						level[tileX + tileY * level.GetWidth()].SetSolid(true);
 					}
 				}
-				break;
+				else if (m_mouse[1].bHeld) {
+					if (floodMode || m_keys[VK_SHIFT].bHeld) {
+						FloorFillSolid(tileX, tileY, false);
+					}
+					else {
+						level[tileX + tileY * level.GetWidth()].SetSolid(false);
+					}
+				}
+			}
+			break;
 			}
 		}
 	}
+
+#pragma endregion
+
+#pragma region Import Export
 
 	void exportAndImportTool() {
 		DrawStringFont(uiBase + 6, 5, L"NEW");
@@ -530,6 +612,11 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 	}
 
+#pragma endregion
+
+#pragma region Tiles Tool
+
+
 	void tilesTool(int tileX, int tileY) {
 
 		// draw page
@@ -591,21 +678,37 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 		// are we in the world editor
 		if (tileX >= 0 && tileY >= 0 && tileX < level.GetWidth() && tileY < level.GetHeight() && !popup.menuActive && GetMouseX() <= 300) {
-			// change the tile
-			if (m_mouse[0].bHeld) {
-				if (floodMode || m_keys[VK_CONTROL].bHeld) {
-					FloodFillTile(tileX, tileY);
+			// do we have a selection rect, if so are we in it?
+			if ((!pickedFirst && !pickedSecond) || (pickedFirst && pickedSecond && tileX >= startRec.first && tileX < startRec.first + endRex.first - 1 && tileY >= startRec.second && tileY < startRec.second + endRex.second)) {
+				// change the tile
+				if (m_mouse[0].bHeld) {
+					if (floodMode || m_keys[VK_SHIFT].bHeld) {
+						FloodFillTile(tileX, tileY);
+					}
+					else {
+						level[tileX + tileY * level.GetWidth()].SetSpriteId(selectedSprite);
+					}
 				}
-				else {
-					level[tileX + tileY * level.GetWidth()].SetSpriteId(selectedSprite);
+				else if (m_mouse[1].bPressed) {
+					selectedSprite = level[tileX + tileY * level.GetWidth()].GetSpriteId();
 				}
 			}
-			else if (m_mouse[1].bPressed) {
-				selectedSprite = level[tileX + tileY * level.GetWidth()].GetSpriteId();
+			if (GetKey(VK_BACK).bPressed && pickedFirst && pickedSecond) {
+				for (int y = startRec.second; y < endRex.second + startRec.second; y++) {
+					for (int x = startRec.first; x < endRex.first + startRec.first - 1; x++) {
+						int index = x + y * level.GetWidth();
+						level[index].SetSpriteId(selectedSprite);
+					}
+				}
 			}
 		}
 
 	}
+
+
+#pragma endregion
+
+#pragma region Utils
 
 	inline bool ends_with(std::wstring const & value, std::wstring const & ending)
 	{
@@ -653,10 +756,12 @@ class olcLevelMaker : public olcConsoleGameEngine {
 		}
 	}
 
-	bool ShouldFillTile(int x,int y) {
+	bool ShouldFillTile(int x, int y) {
 		if (x < 0 || y < 0 || x >= level.GetWidth() || y >= level.GetHeight()) return false;
 		return level[x + y * level.GetWidth()].GetSpriteId() == fillTileOfType;
 	}
+
+#pragma endregion
 
 };
 
