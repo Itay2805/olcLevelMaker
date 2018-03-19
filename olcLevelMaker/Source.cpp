@@ -9,10 +9,9 @@
 
 #define TILE_WIDTH 16
 #define FONT_SPRITESHEET L"javidx9_nesfont8x8.spr"
-#define TILE_SPRITESHEET L"loztheme.png.spr"
+#define TILE_SPRITESHEET L"loztheme.spr"
 #define MAP_WIDTH 10
 #define MAP_HEIGHT 10
-#define LEVEL_FILE_NAME L"level.lvl"
 #define DEFAULT_TILE 14
 
 enum class Tool {
@@ -53,7 +52,6 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	float mapMoveX, mapMoveY;
 	SpriteSheet font;
 	SpriteSheet* tiles;
-	wstring characters = L" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefgijklmnopqrstuvwxyz{|}~";
 	
 	olcSprite fillIcon;
 
@@ -63,7 +61,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	int selectedSprite = 0;
 	int pageCount = 1;
 	int uiBase = 300, tilesPerRow, tilesPerColumn, tilesPerPage, uiWidth;
-	int worldOffsetX = 0, worldOffsetY = 0;
+	float worldOffsetX = 0, worldOffsetY = 0;
 	bool grid = false;
 	bool floodMode = false;
 
@@ -75,7 +73,6 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	void DrawStringFont(int x, int y, const wstring& characters) {
 		// will use ascii
 		for (wchar_t c : characters) {
-			// int index = this->characters.find(c);
 			if (c - ' ' >= font.GetTileCount()) {
 				continue;
 			}
@@ -86,7 +83,6 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 	virtual bool OnUserCreate() {
 		font.Load(FONT_SPRITESHEET, 8, 8);
-		// tiles.Load(TILE_SPRITESHEET, 16, 16);
 		
 		istringstream fillSprite(fillSpriteData);
 		int fillWidth, fillHeight;
@@ -132,16 +128,16 @@ class olcLevelMaker : public olcConsoleGameEngine {
 	bool moved = false;
 
 	virtual bool OnUserUpdate(float fElapsedTime) {
-		int tileX = m_mousePosX / 16;
-		int tileY = m_mousePosY / 16;
+		float fTileX = m_mousePosX / 16;
+		float fTileY = m_mousePosY / 16;
 		// simple
-		tileX -= worldOffsetX / 16;
-		tileY -= worldOffsetY / 16;
+		int tileX = (int)(round(fTileX - worldOffsetX / 16));
+		int tileY = (int)(round(fTileY - worldOffsetY / 16));
 
 		Fill(0, 0, 300, 200, ' ', BG_BLACK | FG_BLACK);
 
-		int topTileX = -(worldOffsetX / 16);
-		int topTileY = -(worldOffsetY / 16);
+		int topTileX = -(floor(worldOffsetX / 16)) - 1;
+		int topTileY = -(floor(worldOffsetY / 16)) - 1;
 
 		// draw map
 		for (int y = topTileY; y < topTileY + ceil(200.0 / TILE_WIDTH); y++) {
@@ -151,7 +147,9 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				if (i < 0 || i >= level.GetWidth() * level.GetHeight()) continue;
 				int screenX = x * TILE_WIDTH + worldOffsetX;
 				int screenY = y * TILE_WIDTH + worldOffsetY;
-				if (screenX < 0 || screenX >= 300 || screenY < 0 || screenY >= 200) continue;
+				if (screenX < -16 || screenX >= 300 || screenY < -16 || screenY >= 200) continue;
+				if (screenX < 0) screenX = 0;
+				if (screenY < 0) screenY = 0;
 				DrawSprite(screenX, screenY, level[i].GetSprite());
 				if (grid) {
 					DrawLine(screenX, screenY, screenX + TILE_WIDTH, screenY, PIXEL_SOLID, BG_BLACK | FG_BLACK);
@@ -267,9 +265,6 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				str.append(L">");
 				DrawStringFont(0, 0, str);
 
-				int yoff = worldOffsetY;
-				int xoff = worldOffsetX;
-
 				// draw hovered tile rect
 				DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + 16 + worldOffsetX, tileY * 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
 				DrawLine(tileX * 16 + worldOffsetX, tileY * 16 + worldOffsetY, tileX * 16 + worldOffsetX, tileY * 16 + 16 + worldOffsetY, PIXEL_SOLID, BG_BLACK | FG_GREY);
@@ -284,11 +279,29 @@ class olcLevelMaker : public olcConsoleGameEngine {
 			}
 
 			// world movement
+#ifdef SMOOTH_WORLD_MOVEMENT
+			if (GetKey(L'W').bHeld) {
+				moved = true;
+				worldOffsetY += 32 * fElapsedTime * (GetKey(VK_SHIFT).bHeld ? 2 : 1);
+			}
+			if (GetKey(L'S').bHeld) {
+				moved = true;
+				worldOffsetY -= 32 * fElapsedTime * (GetKey(VK_SHIFT).bHeld ? 2 : 1);
+			}
+			if (GetKey(L'A').bHeld) {
+				moved = true;
+				worldOffsetX += 32 * fElapsedTime * (GetKey(VK_SHIFT).bHeld ? 2 : 1);
+			}
+			if (GetKey(L'D').bHeld) {
+				moved = true;
+				worldOffsetX -= 32 * fElapsedTime * (GetKey(VK_SHIFT).bHeld ? 2 : 1);
+			}
+#else
 			if (GetKey(L'W').bPressed || (GetKey(VK_SHIFT).bHeld && GetKey(L'W').bHeld)) {
 				moved = true;
 				worldOffsetY += 16;
 			}
-			if ((!m_keys[VK_CONTROL].bHeld && GetKey(L'S').bPressed) || (GetKey(VK_SHIFT).bHeld && GetKey(L'S').bHeld)) {
+			if ((!GetKey(0).bHeld && GetKey(L'S').bPressed) || (GetKey(VK_SHIFT).bHeld && GetKey(L'S').bHeld)) {
 				moved = true;
 				worldOffsetY -= 16;
 			}
@@ -300,6 +313,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 				moved = true;
 				worldOffsetX -= 16;
 			}
+#endif
 			if (m_keys[VK_CONTROL].bHeld && m_keys[L'S'].bPressed) {
 				if (file.length() == 0) {
 					SaveLevel();
@@ -648,6 +662,7 @@ class olcLevelMaker : public olcConsoleGameEngine {
 
 int main() {
 	olcLevelMaker levelMaker;
-	levelMaker.ConstructConsole(400, 200, 4, 4);
-	levelMaker.Start();
+	if (levelMaker.ConstructConsole(400, 200, 4, 4)) {
+		levelMaker.Start();
+	}
 }

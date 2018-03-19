@@ -600,7 +600,7 @@ public:
 
 		// Create translated model vector of coordinate pairs
 		vector<pair<float, float>> vecTransformedCoordinates;
-		size_t verts = vecModelCoordinates.size();
+		int verts = vecModelCoordinates.size();
 		vecTransformedCoordinates.resize(verts);
 
 		// Rotate
