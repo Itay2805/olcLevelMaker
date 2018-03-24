@@ -57,35 +57,45 @@ namespace olcLevelEditor {
 	void LevelEditor::DrawMap() {
 		mapPanel->Fill(0, 0, mapPanel->GetWidth(), mapPanel->GetHeight(), ' ', BG_BLACK);
 
-		Tile* topTile = map->GetTile((worldOffsetX) / TILE_WIDTH, (worldOffsetY) / TILE_WIDTH);
+		int topX = worldOffsetX > 0 ? (worldOffsetX) / TILE_WIDTH : 0;
+		int topY = worldOffsetY > 0 ? (worldOffsetY) / TILE_WIDTH : 0;
+		if (map->TileExists(topX, topY)) {
+			Tile* topTile = map->GetTile(topX, topY);
 
-		int minWidth = min((WIDTH - MENU_WIDTH) / TILE_WIDTH, map->GetWidth());
-		int minHeight = min(HEIGHT / TILE_WIDTH, map->GetHeight());
+			int minWidth = min((WIDTH - MENU_WIDTH) / TILE_WIDTH, map->GetWidth());
+			int minHeight = min(HEIGHT / TILE_WIDTH, map->GetHeight());
 
-		int spritesheetWidth = spritesheet.nWidth / TILE_WIDTH;
+			int spritesheetWidth = spritesheet.nWidth / TILE_WIDTH;
 
-		for (int my = 0; my < minHeight; my++) {
-			for (int mx = 0; mx < minWidth; mx++) {
-				if (!map->TileExists(topTile->GetX() + mx, topTile->GetY() + my)) continue;
-				Tile* currentTile = map->GetTile(topTile->GetX() + mx, topTile->GetY() + my);
-				int screenX = currentTile->GetX() * TILE_WIDTH - worldOffsetX;
-				int screenY = currentTile->GetY() * TILE_WIDTH - worldOffsetY;
-				int ox = currentTile->GetID() % spritesheetWidth;
-				int oy = currentTile->GetID() / spritesheetWidth;
-				DrawPartialSprite(screenX, screenY, &spritesheet, ox, oy, TILE_WIDTH, TILE_WIDTH);
+			for (int my = 0; my < minHeight; my++) {
+				for (int mx = 0; mx < minWidth; mx++) {
+					if (!map->TileExists(topTile->GetX() + mx, topTile->GetY() + my)) continue;
+					Tile* currentTile = map->GetTile(topTile->GetX() + mx, topTile->GetY() + my);
+					int screenX = currentTile->GetX() * TILE_WIDTH - worldOffsetX;
+					int screenY = currentTile->GetY() * TILE_WIDTH - worldOffsetY;
+					int ox = currentTile->GetID() % spritesheetWidth;
+					int oy = currentTile->GetID() / spritesheetWidth;
+					DrawPartialSprite(screenX, screenY, &spritesheet, ox, oy, TILE_WIDTH, TILE_WIDTH);
+				}
 			}
 		}
+		if (DoInput()) {
+			// draw hovered tile/selection
+			Tile* hoveredTile = GetHoveredTile();
+			if (hoveredTile != nullptr) {
+				int tileX = hoveredTile->GetX();
+				int tileY = hoveredTile->GetY();
 
-		// draw hovered tile/selection
-		Tile* hoveredTile = GetHoveredTile();
-		if (hoveredTile != nullptr) {
-			int tileX = hoveredTile->GetX();
-			int tileY = hoveredTile->GetY();
+				int screenX = tileX * TILE_WIDTH - worldOffsetX;
+				int screenY = tileY * TILE_WIDTH - worldOffsetY;
 
-			int screenX = tileX * TILE_WIDTH - worldOffsetX;
-			int screenY = tileY * TILE_WIDTH - worldOffsetY;
+				DrawRect(screenX, screenY, TILE_WIDTH, TILE_WIDTH);
+			}
 
-			DrawRect(screenX, screenY, TILE_WIDTH, TILE_WIDTH);
+			if (GetKey('W').bHeld) worldOffsetY += 1 * (GetKey(VK_SHIFT).bHeld ? 2 : 1);
+			if (GetKey('S').bHeld) worldOffsetY -= 1 * (GetKey(VK_SHIFT).bHeld ? 2 : 1);
+			if (GetKey('A').bHeld) worldOffsetX += 1 * (GetKey(VK_SHIFT).bHeld ? 2 : 1);
+			if (GetKey('D').bHeld) worldOffsetX -= 1 * (GetKey(VK_SHIFT).bHeld ? 2 : 1);
 		}
 	}
 
@@ -121,7 +131,7 @@ namespace olcLevelEditor {
 		}
 
 		// check for popup
-		if (popup != nullptr && popup->IsFinished()) {
+		if (HasPopup()) {
 			// only if NewMapPopup
 			NewMapPopup* newMapPopup = dynamic_cast<NewMapPopup*>(popup);
 			if (newMapPopup != nullptr) {

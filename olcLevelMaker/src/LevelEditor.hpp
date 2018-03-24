@@ -96,7 +96,8 @@ namespace olcLevelEditor {
 		void DrawRect(int x, int y, int width, int height, wchar_t c = 0x2588, short col = 0x000F);
 
 		bool Button(int x, int y, const std::string& text, bool centered = false, Font* font = nullptr, bool fromPopup = false);
-		inline bool DoInput() { return popup != nullptr; }
+		inline bool DoInput() { return popup == nullptr; }
+		inline bool HasPopup() { return popup != nullptr && popup->IsFinished(); }
 
 		inline Font* GetDefaultFont() { return this->defaultFont; }
 
