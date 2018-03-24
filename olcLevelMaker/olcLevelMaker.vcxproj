@@ -115,15 +115,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Level.h" />
-    <ClInclude Include="olcConsoleGameEngine.h" />
-    <ClInclude Include="SpriteSheet.h" />
+    <ClInclude Include="src\LevelEditor.hpp" />
+    <ClInclude Include="src\olcConsoleGameEngine.hpp" />
+    <ClInclude Include="src\olcMapFormat.hpp" />
+    <ClInclude Include="src\popups\NewMapPopup.hpp" />
+    <ClInclude Include="src\ui\Font.hpp" />
+    <ClInclude Include="src\ui\TextInput.hpp" />
+    <ClInclude Include="src\ui\Panel.hpp" />
+    <ClInclude Include="src\ui\Popup.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Level.cpp" />
-    <ClCompile Include="olcConsoleGameEngine.cpp" />
-    <ClCompile Include="Source.cpp" />
-    <ClCompile Include="SpriteSheet.cpp" />
+    <ClCompile Include="src\LevelEditor.cpp" />
+    <ClCompile Include="src\olcConsoleGameEngine.cpp" />
+    <ClCompile Include="src\olcMapFormat.cpp" />
+    <ClCompile Include="src\popups\ErrorPopup.hpp" />
+    <ClCompile Include="src\Source.cpp" />
+    <ClCompile Include="src\ui\Panel.cpp" />
+    <ClCompile Include="src\ui\TextInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="javidx9_nesfont8x8.spr" />

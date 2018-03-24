@@ -15,27 +15,51 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="olcConsoleGameEngine.h">
+    <ClInclude Include="src\ui\Panel.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Level.h">
+    <ClInclude Include="src\ui\TextInput.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SpriteSheet.h">
+    <ClInclude Include="src\popups\NewMapPopup.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\Font.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\Popup.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\olcMapFormat.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LevelEditor.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\olcConsoleGameEngine.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
+    <ClCompile Include="src\olcConsoleGameEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Level.cpp">
+    <ClCompile Include="src\LevelEditor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SpriteSheet.cpp">
+    <ClCompile Include="src\olcMapFormat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="olcConsoleGameEngine.cpp">
+    <ClCompile Include="src\ui\Panel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\TextInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\popups\ErrorPopup.hpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
